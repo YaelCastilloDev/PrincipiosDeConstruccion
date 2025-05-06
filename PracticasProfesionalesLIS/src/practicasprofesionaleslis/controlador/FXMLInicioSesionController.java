@@ -67,7 +67,7 @@ public class FXMLInicioSesionController implements Initializable {
         } catch (SQLException e) {
             Utilidades.mostrarAlertaSimple(Alert.AlertType.ERROR,
                     "Problema de conexión",
-                    "Error de conexión" + e.getMessage());
+                    "Error de conexión: " + e.getMessage());
         }
     }
     
