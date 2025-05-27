@@ -16,8 +16,9 @@ public class PracticasProfesionalesLIS extends Application {
             Scene escenaInicioSesion = new Scene(vista);
             
             primaryStage.setScene(escenaInicioSesion);
-            primaryStage.setTitle("Inicio de Sesión");
+            primaryStage.setTitle("INICIO DE SESIÓN");
             primaryStage.show();
+            primaryStage.setResizable(false);
             primaryStage.centerOnScreen();
         } catch (IOException e) {
             e.printStackTrace();
