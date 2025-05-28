@@ -1,49 +1,65 @@
 package practicasprofesionaleslis.controlador;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
-import javafx.stage.Stage;
-import practicasprofesionaleslis.utilidades.Utilidades;
+import javafx.scene.image.ImageView;
+import practicasprofesionaleslis.modelo.pojo.Estudiante;
+import practicasprofesionaleslis.utilidades.UtilidadesVentanas;
 
 public class FXMLPrincipalEstudianteController implements Initializable {
-    @FXML private Label lbNombreEstudiante;
+    private Estudiante estudiante;
+    
+    @FXML
+    private ImageView imgFotoPerfil;
+    @FXML
+    private Label lblNombreEstudiante;
+    @FXML
+    private Label lblMatricula;
+    @FXML
+    private Label lblProyecto;
     
     @Override
     public void initialize(URL url, ResourceBundle rb) {}
     
-    public void btnCerrarSesion(ActionEvent event) {
-        Alert.AlertType tipo = Alert.AlertType.CONFIRMATION;
-        String titulo = "Cerrar Sesión";
-        String contenido = "¿Estás seguro que deseas cerrar sesión?";
-
-        if (Utilidades.mostrarAlertaSimple(tipo, titulo, contenido).get() == ButtonType.OK) {
-            irInicioSesion();
+    public void inicializarDatosEstudiante(Estudiante estudiante, String nombreProyecto) {
+        this.estudiante = estudiante;
+        if (estudiante != null && !nombreProyecto.isEmpty()) {
+            lblNombreEstudiante.setText(estudiante.toString());
+            lblMatricula.setText(estudiante.getMatricula());
+            lblProyecto.setText(nombreProyecto);
         }
     }
 
-    private void irInicioSesion() {
-        try {
-            Stage escenarioBase = (Stage) lbNombreEstudiante.getScene().getWindow();
-            Parent vista = FXMLLoader.load(getClass().getResource("/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml"));
-            Scene escenaPrincipal = new Scene(vista);
-            
-            escenarioBase.setScene(escenaPrincipal);
-            escenarioBase.setTitle("Pantalla Principal - Estudiante");
-            escenarioBase.showAndWait();
-            escenarioBase.centerOnScreen();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Error: " + e.getMessage());
+    @FXML
+    private void clicBtnCerrarSesion(ActionEvent event) {
+        Alert.AlertType tipo = Alert.AlertType.CONFIRMATION;
+        String titulo = "CERRAR SESIÓN";
+        String contenido = "¿Estás seguro que deseas cerrar sesión?";
+
+        if (UtilidadesVentanas.mostrarAlertaSimple(tipo, titulo, contenido).get() == ButtonType.OK) {
+            UtilidadesVentanas.irInicioSesion(lblProyecto);
         }
+    }
+
+    @FXML
+    private void clicBtnConsultarAvance(ActionEvent event) {
+    }
+
+    @FXML
+    private void clicBtnActualizarExpediente(ActionEvent event) {
+    }
+
+    @FXML
+    private void clicBtnEvaluarOrganizacionVinculada(ActionEvent event) {
+    }
+
+    @FXML
+    private void clicBtnGenerarFormatoEvaluacion(ActionEvent event) {
     }
 }

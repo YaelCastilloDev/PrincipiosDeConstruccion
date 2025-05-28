@@ -5,22 +5,27 @@ public class ExperienciaEducativa {
     private int nrc;
     private String nombre;
     private int creditos;
-    private int numeroHoras;
+    private int numHoras;
     private String bloque;
     private String seccion;
+    private Coordinador coordinador;
+    private ProfesorEE profesorEE;
+    private Periodo periodo;
 
     public ExperienciaEducativa() {
     }
 
-    public ExperienciaEducativa(int id, int nrc, String nombre, int creditos, 
-                               int numeroHoras, String bloque, String seccion) {
+    public ExperienciaEducativa(int id, int nrc, String nombre, int creditos, int numHoras, String bloque, String seccion, Coordinador coordinador, ProfesorEE profesorEE, Periodo periodo) {
         this.id = id;
         this.nrc = nrc;
         this.nombre = nombre;
         this.creditos = creditos;
-        this.numeroHoras = numeroHoras;
+        this.numHoras = numHoras;
         this.bloque = bloque;
         this.seccion = seccion;
+        this.coordinador = coordinador;
+        this.profesorEE = profesorEE;
+        this.periodo = periodo;
     }
 
     public int getId() {
@@ -55,12 +60,12 @@ public class ExperienciaEducativa {
         this.creditos = creditos;
     }
 
-    public int getNumeroHoras() {
-        return numeroHoras;
+    public int getNumHoras() {
+        return numHoras;
     }
 
-    public void setNumeroHoras(int numeroHoras) {
-        this.numeroHoras = numeroHoras;
+    public void setNumHoras(int numHoras) {
+        this.numHoras = numHoras;
     }
 
     public String getBloque() {
@@ -79,8 +84,27 @@ public class ExperienciaEducativa {
         this.seccion = seccion;
     }
 
-    @Override
-    public String toString() {
-        return nombre + " (NRC: " + nrc + ")";
+    public Coordinador getCoordinador() {
+        return coordinador;
+    }
+
+    public void setCoordinador(Coordinador coordinador) {
+        this.coordinador = coordinador;
+    }
+
+    public ProfesorEE getProfesorEE() {
+        return profesorEE;
+    }
+
+    public void setProfesorEE(ProfesorEE profesorEE) {
+        this.profesorEE = profesorEE;
+    }
+
+    public Periodo getPeriodo() {
+        return periodo;
+    }
+
+    public void setPeriodo(Periodo periodo) {
+        this.periodo = periodo;
     }
 }
