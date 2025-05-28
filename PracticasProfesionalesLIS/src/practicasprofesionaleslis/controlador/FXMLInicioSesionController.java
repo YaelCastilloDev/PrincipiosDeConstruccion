@@ -271,6 +271,22 @@ public class FXMLInicioSesionController implements Initializable {
     }
     
     private void irPantallaPrincipalEvaluador(Evaluador evaluador) {
-        // TODO
+        try {
+            Stage escenarioBase = (Stage) txtfUsuario.getScene().getWindow();
+            FXMLLoader cargador = new FXMLLoader(PracticasProfesionalesLIS.class.getResource("/practicasprofesionaleslis/vista/FXMLPrincipalEvaluador.fxml"));
+            Parent vista = cargador.load();
+            FXMLPrincipalEvaluadorController controlador = cargador.getController();
+            controlador.inicializarDatosEvaluador(evaluador);
+            
+            Scene escenaPrincipal = new Scene(vista);
+            escenarioBase.setScene(escenaPrincipal);
+            escenarioBase.setTitle("PANTALLA PRINCIPAL - EVALUADOR");
+            escenarioBase.setResizable(false);
+            escenarioBase.centerOnScreen();
+            escenarioBase.showAndWait();
+        } catch (IOException e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }
