@@ -1,19 +1,14 @@
 package practicasprofesionaleslis.controlador;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
-import javafx.stage.Stage;
 import practicasprofesionaleslis.modelo.pojo.Estudiante;
 import practicasprofesionaleslis.utilidades.Utilidades;
 
@@ -48,23 +43,7 @@ public class FXMLPrincipalEstudianteController implements Initializable {
         String contenido = "¿Estás seguro que deseas cerrar sesión?";
 
         if (Utilidades.mostrarAlertaSimple(tipo, titulo, contenido).get() == ButtonType.OK) {
-            irInicioSesion();
-        }
-    }
-    
-    private void irInicioSesion() {
-        try {
-            Stage escenarioBase = (Stage) lblNombreEstudiante.getScene().getWindow();
-            Parent vista = FXMLLoader.load(getClass().getResource("/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml"));
-            Scene escenaPrincipal = new Scene(vista);
-            
-            escenarioBase.setScene(escenaPrincipal);
-            escenarioBase.setTitle("INICIO DE SESIÓN");
-            escenarioBase.show();
-            escenarioBase.centerOnScreen();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Error: " + e.getMessage());
+            Utilidades.irInicioSesion(lblProyecto);
         }
     }
 

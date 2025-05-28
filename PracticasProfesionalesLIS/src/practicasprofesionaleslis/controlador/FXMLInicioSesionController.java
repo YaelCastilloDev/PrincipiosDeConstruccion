@@ -191,7 +191,23 @@ public class FXMLInicioSesionController implements Initializable {
     }
     
     private void irPantallaPrincipalCoordinador(Coordinador coordinador) {
-        // TODO
+        try {
+            Stage escenarioBase = (Stage) txtfUsuario.getScene().getWindow();
+            FXMLLoader cargador = new FXMLLoader(PracticasProfesionalesLIS.class.getResource("/practicasprofesionaleslis/vista/FXMLPrincipalCoordinador.fxml"));
+            Parent vista = cargador.load();
+            FXMLPrincipalCoordinadorController controlador = cargador.getController();
+            controlador.inicializarDatosCoordinador(coordinador);
+            
+            Scene escenaPrincipal = new Scene(vista);
+            escenarioBase.setScene(escenaPrincipal);
+            escenarioBase.setTitle("PANTALLA PRINCIPAL - COORDINADOR");
+            escenarioBase.setResizable(false);
+            escenarioBase.centerOnScreen();
+            escenarioBase.showAndWait();
+        } catch (IOException e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     private void irPantallaPrincipalProfesorEE(ProfesorEE profesorEE) {
