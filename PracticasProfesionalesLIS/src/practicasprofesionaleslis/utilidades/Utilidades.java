@@ -34,6 +34,7 @@ public class Utilidades {
             escenarioBase.setScene(escenaPrincipal);
             escenarioBase.setTitle("INICIO DE SESIÓN");
             escenarioBase.show();
+            escenarioBase.setResizable(false);
             escenarioBase.centerOnScreen();
         } catch (IOException e) {
             e.printStackTrace();

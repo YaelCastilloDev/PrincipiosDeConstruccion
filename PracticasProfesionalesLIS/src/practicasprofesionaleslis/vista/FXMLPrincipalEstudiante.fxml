@@ -43,24 +43,24 @@
             <Font name="Gill Sans MT" size="30.0" />
          </font>
       </Button>
-      <Button layoutX="94.0" layoutY="345.0" mnemonicParsing="false" onAction="#clicBtnConsultarAvance" prefHeight="74.0" prefWidth="410.0" style="-fx-background-color: #28ad56;" text="Consultar Avance" textFill="WHITE">
+      <Button layoutX="172.0" layoutY="345.0" mnemonicParsing="false" onAction="#clicBtnConsultarAvance" prefHeight="29.0" prefWidth="329.0" style="-fx-background-color: #28ad56;" text="Consultar Avance" textFill="WHITE">
          <font>
-            <Font name="Gill Sans MT" size="40.0" />
+            <Font name="Gill Sans MT" size="30.0" />
          </font>
       </Button>
-      <Button layoutX="94.0" layoutY="488.0" mnemonicParsing="false" onAction="#clicBtnActualizarExpediente" prefHeight="74.0" prefWidth="410.0" style="-fx-background-color: #28ad56;" text="Actualizar Expediente" textFill="WHITE">
+      <Button layoutX="172.0" layoutY="488.0" mnemonicParsing="false" onAction="#clicBtnActualizarExpediente" prefHeight="46.0" prefWidth="329.0" style="-fx-background-color: #28ad56;" text="Actualizar Expediente" textFill="WHITE">
          <font>
-            <Font name="Gill Sans MT" size="40.0" />
+            <Font name="Gill Sans MT" size="30.0" />
          </font>
       </Button>
-      <Button layoutX="604.0" layoutY="488.0" mnemonicParsing="false" onAction="#clicBtnEvaluarOrganizacionVinculada" prefHeight="74.0" prefWidth="573.0" style="-fx-background-color: #28ad56;" text="Evaluar Organización Vinculada" textFill="WHITE">
+      <Button layoutX="670.0" layoutY="488.0" mnemonicParsing="false" onAction="#clicBtnEvaluarOrganizacionVinculada" prefHeight="55.0" prefWidth="429.0" style="-fx-background-color: #28ad56;" text="Evaluar Organización Vinculada" textFill="WHITE">
          <font>
-            <Font name="Gill Sans MT" size="40.0" />
+            <Font name="Gill Sans MT" size="30.0" />
          </font>
       </Button>
-      <Button layoutX="604.0" layoutY="345.0" mnemonicParsing="false" onAction="#clicBtnGenerarFormatoEvaluacion" style="-fx-background-color: #28ad56;" text="Generar Formato de Evaluación" textFill="WHITE">
+      <Button layoutX="670.0" layoutY="345.0" mnemonicParsing="false" onAction="#clicBtnGenerarFormatoEvaluacion" style="-fx-background-color: #28ad56;" text="Generar Formato de Evaluación" textFill="WHITE">
          <font>
-            <Font name="Gill Sans MT" size="40.0" />
+            <Font name="Gill Sans MT" size="30.0" />
          </font>
       </Button>
       <Separator layoutX="35.0" layoutY="258.0" prefHeight="7.0" prefWidth="1210.0" style="-fx-border-color: 000000;" />
