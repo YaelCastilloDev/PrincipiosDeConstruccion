@@ -10,7 +10,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import practicasprofesionaleslis.modelo.pojo.ProfesorEE;
-import practicasprofesionaleslis.utilidades.Utilidades;
+import practicasprofesionaleslis.utilidades.UtilidadesVentanas;
 
 public class FXMLPrincipalProfesorEEController implements Initializable {
     private ProfesorEE profesorEE;
@@ -40,8 +40,8 @@ public class FXMLPrincipalProfesorEEController implements Initializable {
         String titulo = "CERRAR SESIÓN";
         String contenido = "¿Estás seguro que deseas cerrar sesión?";
 
-        if (Utilidades.mostrarAlertaSimple(tipo, titulo, contenido).get() == ButtonType.OK) {
-            Utilidades.irInicioSesion(lblNombreProfesorEE);
+        if (UtilidadesVentanas.mostrarAlertaSimple(tipo, titulo, contenido).get() == ButtonType.OK) {
+            UtilidadesVentanas.irInicioSesion(lblNombreProfesorEE);
         }
     }
 

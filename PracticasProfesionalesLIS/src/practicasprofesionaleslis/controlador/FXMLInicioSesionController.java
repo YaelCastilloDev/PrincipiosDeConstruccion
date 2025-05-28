@@ -22,7 +22,8 @@ import practicasprofesionaleslis.modelo.pojo.Coordinador;
 import practicasprofesionaleslis.modelo.pojo.Estudiante;
 import practicasprofesionaleslis.modelo.pojo.Evaluador;
 import practicasprofesionaleslis.modelo.pojo.ProfesorEE;
-import practicasprofesionaleslis.utilidades.Utilidades;
+import practicasprofesionaleslis.utilidades.UtilidadesVentanas;
+import practicasprofesionaleslis.utilidades.ValidadorID;
 
 public class FXMLInicioSesionController implements Initializable {
     @FXML
@@ -39,19 +40,24 @@ public class FXMLInicioSesionController implements Initializable {
     
     @FXML
     public void clicBtnVerificarSesion(ActionEvent event) {
-        String usuario = txtfUsuario.getText();
+        String usuario = txtfUsuario.getText().trim();
         String contraseña = pwdfPassword.getText();
-        int tipoUsuario = determinarTipoUsuario(usuario);
         
         if (validarCampos(usuario, contraseña)) {
+            int tipoUsuario = determinarTipoUsuario(usuario);
+            
+            if (!validarFormatoID(usuario, tipoUsuario)) {
+                return;
+            }
+            
             switch (tipoUsuario) {
                 case 1: validarCredencialesEstudiante(usuario, contraseña); break;
                 case 2: validarCredencialesCoordinador(usuario, contraseña); break;
                 case 3: validarCredencialesProfesorEE(usuario, contraseña); break;
                 case 4: validarCredencialesEvaluador(usuario, contraseña); break;
-                default: Utilidades.mostrarAlertaSimple(Alert.AlertType.WARNING,
-                        "USUARIO NO VÁLIDO",
-                        "Tipo de usuario no válido. Verifique sus credenciales.");
+                default: UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.WARNING,
+                        "FORMATO DE USUARIO NO VÁLIDO",
+                        "El formato del ID de usuario no es válido.");
             }
         }
     }
@@ -72,17 +78,51 @@ public class FXMLInicioSesionController implements Initializable {
         return camposValidos;
     }
     
-    private int determinarTipoUsuario(String usuario) {
-        if (usuario.startsWith("S")) {
-            return 1;
-        } else if (usuario.startsWith("C")) {
-            return 2;
-        } else if (usuario.startsWith("P")) {
-            return 3;
-        } else if (usuario.startsWith("E")) {
-            return 4;
+    private boolean validarFormatoID(String usuario, int tipoUsuario) {
+        boolean formatoValido = false;
+        String mensajeError = "";
+        
+        switch (tipoUsuario) {
+            case 1:
+                formatoValido = ValidadorID.validarIDEstudiante(usuario);
+                mensajeError = "Formato de matrícula del estudiante inválido.";
+                break;
+            case 2:
+                formatoValido = ValidadorID.validarIDCoordinador(usuario);
+                mensajeError = "Formato de número de personal del coordinador inválido.";
+                break;
+            case 3:
+                formatoValido = ValidadorID.validarIDProfesor(usuario);
+                mensajeError = "Formato de número de personal del profesor inválido.";
+                break;
+            case 4: 
+                formatoValido = ValidadorID.validarIDEvaluador(usuario);
+                mensajeError = "Formato de número de personal del evaluador inválido.";
+                break;
+            default: mensajeError = "Formato de usuario no reconocido.";
         }
-        return 0;
+        
+        if (!formatoValido) {
+            UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.WARNING,
+                    "FORMATO INCORRECTO",
+                    mensajeError);
+        }
+        return formatoValido;
+    }
+    
+    private int determinarTipoUsuario(String usuario) {
+        if (usuario.isEmpty()) {
+            return 0;
+        }
+        
+        char primerCaracter = usuario.charAt(0);
+        switch (primerCaracter) {
+            case 'S': return 1;
+            case 'C': return 2;
+            case 'P': return 3;
+            case 'E': return 4;
+            default: return 0;
+        }
     }
     
     private void validarCredencialesEstudiante(String usuario, String contraseña) {
@@ -90,18 +130,18 @@ public class FXMLInicioSesionController implements Initializable {
             Estudiante estudiante = InicioSesionDAO.verificarCredencialesEstudiante(usuario, contraseña);
             
             if (estudiante != null) {
-                Utilidades.mostrarAlertaSimple(Alert.AlertType.INFORMATION,
+                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.INFORMATION,
                         "CREDENCIALES CORRECTAS",
                         "Bienvenido(a) " + estudiante.toString() + " al sistema.");
                 String nombreProyecto = ExpedienteDAO.obtenerNombreProyectoPorMatricula(estudiante.getMatricula());
                 irPantallaPrincipalEstudiante(estudiante, nombreProyecto);
             } else {
-                Utilidades.mostrarAlertaSimple(Alert.AlertType.WARNING,
+                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.WARNING,
                         "CREDENCIALES INCORRECTAS",
                         "Usuario y/o contraseña incorrectos. Por favor, verifique las credenciales.");
             }
         } catch (SQLException e) {
-            Utilidades.mostrarAlertaSimple(Alert.AlertType.ERROR,
+            UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.ERROR,
                     "ERROR",
                     e.getMessage());
         }
@@ -112,17 +152,17 @@ public class FXMLInicioSesionController implements Initializable {
             Coordinador coordinador = InicioSesionDAO.verificarCredencialesCoordinador(usuario, contraseña);
             
             if (coordinador != null) {
-                Utilidades.mostrarAlertaSimple(Alert.AlertType.INFORMATION,
+                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.INFORMATION,
                         "CREDENCIALES CORRECTAS",
                         "Bienvenido(a) " + coordinador.toString() + " al sistema.");
                 irPantallaPrincipalCoordinador(coordinador);
             } else {
-                Utilidades.mostrarAlertaSimple(Alert.AlertType.WARNING,
+                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.WARNING,
                         "CREDENCIALES INCORRECTAS",
                         "Usuario y/o contraseña incorrectos. Por favor, verifique las credenciales.");
             }
         } catch (SQLException e) {
-            Utilidades.mostrarAlertaSimple(Alert.AlertType.ERROR,
+            UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.ERROR,
                     "ERROR",
                     e.getMessage());
         }
@@ -133,17 +173,17 @@ public class FXMLInicioSesionController implements Initializable {
             ProfesorEE profesorEE = InicioSesionDAO.verificarCredencialesProfesorEE(usuario, contraseña);
             
             if (profesorEE != null) {
-                Utilidades.mostrarAlertaSimple(Alert.AlertType.INFORMATION,
+                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.INFORMATION,
                         "CREDENCIALES CORRECTAS",
                         "Bienvenido(a) " + profesorEE.toString() + " al sistema.");
                 irPantallaPrincipalProfesorEE(profesorEE);
             } else {
-                Utilidades.mostrarAlertaSimple(Alert.AlertType.WARNING,
+                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.WARNING,
                         "CREDENCIALES INCORRECTAS",
                         "Usuario y/o contraseña incorrectos. Por favor, verifique las credenciales.");
             }
         } catch (SQLException e) {
-            Utilidades.mostrarAlertaSimple(Alert.AlertType.ERROR,
+            UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.ERROR,
                     "ERROR",
                     e.getMessage());
         }
@@ -154,17 +194,17 @@ public class FXMLInicioSesionController implements Initializable {
             Evaluador evaluador = InicioSesionDAO.verificarCredencialesEvaluador(usuario, contraseña);
             
             if (evaluador != null) {
-                Utilidades.mostrarAlertaSimple(Alert.AlertType.INFORMATION,
+                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.INFORMATION,
                         "CREDENCIALES CORRECTAS",
                         "Bienvenido(a) " + evaluador.toString() + " al sistema.");
                 irPantallaPrincipalEvaluador(evaluador);
             } else {
-                Utilidades.mostrarAlertaSimple(Alert.AlertType.WARNING,
+                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.WARNING,
                         "CREDENCIALES INCORRECTAS",
                         "Usuario y/o contraseña incorrectos. Por favor, verifique las credenciales.");
             }
         } catch (SQLException e) {
-            Utilidades.mostrarAlertaSimple(Alert.AlertType.ERROR,
+            UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.ERROR,
                     "ERROR",
                     e.getMessage());
         }

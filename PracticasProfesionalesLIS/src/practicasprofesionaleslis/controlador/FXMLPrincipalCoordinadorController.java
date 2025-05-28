@@ -10,7 +10,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import practicasprofesionaleslis.modelo.pojo.Coordinador;
-import practicasprofesionaleslis.utilidades.Utilidades;
+import practicasprofesionaleslis.utilidades.UtilidadesVentanas;
 
 public class FXMLPrincipalCoordinadorController implements Initializable {
     private Coordinador coordinador;
@@ -39,8 +39,8 @@ public class FXMLPrincipalCoordinadorController implements Initializable {
         String titulo = "CERRAR SESIÓN";
         String contenido = "¿Estás seguro que deseas cerrar sesión?";
 
-        if (Utilidades.mostrarAlertaSimple(tipo, titulo, contenido).get() == ButtonType.OK) {
-            Utilidades.irInicioSesion(lblNombreCoordinador);
+        if (UtilidadesVentanas.mostrarAlertaSimple(tipo, titulo, contenido).get() == ButtonType.OK) {
+            UtilidadesVentanas.irInicioSesion(lblNombreCoordinador);
         }
     }
 

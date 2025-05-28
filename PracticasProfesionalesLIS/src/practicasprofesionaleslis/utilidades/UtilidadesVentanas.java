@@ -11,7 +11,7 @@ import javafx.scene.control.Control;
 import javafx.stage.Stage;
 import practicasprofesionaleslis.PracticasProfesionalesLIS;
 
-public class Utilidades {
+public class UtilidadesVentanas {
     public static Optional<ButtonType> mostrarAlertaSimple(Alert.AlertType tipo,
             String titulo, String contenido) {
         Alert alerta = new Alert(tipo);
