@@ -11,13 +11,12 @@
             <file>file:/home/yael/Escritorio/javaprojecto/PrincipiosDeConstruccion/PracticasProfesionalesLIS/src/practicasprofesionaleslis/modelo/pojo/EntregaDocumentoIntermedio.java</file>
             <file>file:/home/yael/Escritorio/javaprojecto/PrincipiosDeConstruccion/PracticasProfesionalesLIS/src/practicasprofesionaleslis/modelo/dao/EntregaDocumentoFinalDAO.java</file>
             <file>file:/home/yael/Escritorio/javaprojecto/PrincipiosDeConstruccion/PracticasProfesionalesLIS/src/practicasprofesionaleslis/modelo/dao/EntregaDocumentoIntermedioDAO.java</file>
-            <file>file:/home/yael/Escritorio/javaprojecto/PrincipiosDeConstruccion/PracticasProfesionalesLIS/src/practicasprofesionaleslis/modelo/pojo/Usuario.java</file>
             <file>file:/home/yael/Escritorio/javaprojecto/PrincipiosDeConstruccion/PracticasProfesionalesLIS/src/practicasprofesionaleslis/modelo/pojo/EntregaDocumentoFinal.java</file>
             <file>file:/home/yael/Escritorio/javaprojecto/PrincipiosDeConstruccion/PracticasProfesionalesLIS/src/practicasprofesionaleslis/modelo/pojo/EntregaReporte.java</file>
             <file>file:/home/yael/Escritorio/javaprojecto/PrincipiosDeConstruccion/PracticasProfesionalesLIS/src/practicasprofesionaleslis/modelo/pojo/ExperienciaEducativa.java</file>
             <file>file:/home/yael/Escritorio/javaprojecto/PrincipiosDeConstruccion/PracticasProfesionalesLIS/src/practicasprofesionaleslis/modelo/dao/EntregaReporteDao.java</file>
             <file>file:/home/yael/Escritorio/javaprojecto/PrincipiosDeConstruccion/PracticasProfesionalesLIS/src/practicasprofesionaleslis/controlador/FXMLPrincipalEstudianteController.java</file>
-            <file>file:/home/yael/Escritorio/javaprojecto/PrincipiosDeConstruccion/PracticasProfesionalesLIS/src/practicasprofesionaleslis/utilidades/Utilidades.java</file>
+            <file>file:/home/yael/Escritorio/javaprojecto/PrincipiosDeConstruccion/PracticasProfesionalesLIS/src/practicasprofesionaleslis/modelo/pojo/Coordinador.java</file>
         </group>
     </open-files>
 </project-private>

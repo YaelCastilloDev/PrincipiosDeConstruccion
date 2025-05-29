@@ -1,0 +1,2796 @@
+Index: src/practicasprofesionaleslis/controlador/FXMLInicioSesionController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package practicasprofesionaleslis.controlador;\n\nimport java.io.IOException;\nimport java.net.URL;\nimport java.sql.SQLException;\nimport java.util.ResourceBundle;\nimport javafx.event.ActionEvent;\nimport javafx.fxml.FXML;\nimport javafx.fxml.FXMLLoader;\nimport javafx.fxml.Initializable;\nimport javafx.scene.Parent;\nimport javafx.scene.Scene;\nimport javafx.scene.control.Alert;\nimport javafx.scene.control.Label;\nimport javafx.scene.control.PasswordField;\nimport javafx.scene.control.TextField;\nimport javafx.stage.Stage;\nimport practicasprofesionaleslis.modelo.dao.InicioSesionDAO;\nimport practicasprofesionaleslis.modelo.pojo.Usuario;\nimport practicasprofesionaleslis.utilidades.Utilidades;\n\npublic class FXMLInicioSesionController implements Initializable {\n    @FXML private Label lbErrorUsuario, lbErrorPassword;\n    @FXML private TextField tfUsuario;\n    @FXML private PasswordField tfPassword;\n\n    @Override\n    public void initialize(URL url, ResourceBundle rb) {}    \n    \n    public void btnVerificarSesion(ActionEvent event) {\n        String username = tfUsuario.getText();\n        String password = tfPassword.getText();\n        if (validarCampos(username, password)) {\n            validarCredenciales(username, password);\n        }\n    }\n    \n    private boolean validarCampos(String username, String password) {\n        boolean camposValidos = true;\n        lbErrorUsuario.setText(\"\");\n        lbErrorPassword.setText(\"\");\n        \n        if (username.isEmpty()) {\n            lbErrorUsuario.setText(\"Usuario obligatorio\");\n            camposValidos = false;\n        }\n        if (password.isEmpty()) {\n            lbErrorPassword.setText(\"Contraseña obligatoria\");\n            camposValidos = false;\n        }\n        return camposValidos;\n    }\n    \n    private void validarCredenciales(String username, String password) {\n        try {\n            Usuario usuarioSesion = InicioSesionDAO.verificarCredenciales(username, password);\n            if (usuarioSesion != null) {\n                Utilidades.mostrarAlertaSimple(Alert.AlertType.INFORMATION,\n                        \"Credenciales correctas\",\n                        \"Bienvenido(a) \" + usuarioSesion.toString() + \" al sistema.\");\n                irPantallaPrincipal(usuarioSesion);\n            } else {\n                Utilidades.mostrarAlertaSimple(Alert.AlertType.WARNING,\n                        \"Credenciales incorrectas\",\n                        \"Usuario y/o contraseña incorrectos. Por favor, verifique las credenciales.\");\n            }\n        } catch (SQLException e) {\n            Utilidades.mostrarAlertaSimple(Alert.AlertType.ERROR,\n                    \"Problema de conexión\",\n                    \"Error de conexión: \" + e.getMessage());\n        }\n    }\n    \n    private void irPantallaPrincipal(Usuario usuario) {\n        try {\n            Stage escenarioBase = (Stage) tfUsuario.getScene().getWindow();\n            Parent vista = FXMLLoader.load(getClass().getResource(\"/practicasprofesionaleslis/vista/FXMLPrincipalEstudiante.fxml\"));\n            Scene escenaPrincipal = new Scene(vista);\n            \n            escenarioBase.setScene(escenaPrincipal);\n            escenarioBase.setTitle(\"Pantalla Principal\");\n            escenarioBase.showAndWait();\n            escenarioBase.centerOnScreen();\n        } catch (IOException e) {\n            System.err.println(\"Error: \" + e.getMessage());\n            e.printStackTrace();\n        }\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/controlador/FXMLInicioSesionController.java b/src/practicasprofesionaleslis/controlador/FXMLInicioSesionController.java
+--- a/src/practicasprofesionaleslis/controlador/FXMLInicioSesionController.java	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
++++ b/src/practicasprofesionaleslis/controlador/FXMLInicioSesionController.java	(date 1748475410327)
+@@ -15,72 +15,275 @@
+ import javafx.scene.control.PasswordField;
+ import javafx.scene.control.TextField;
+ import javafx.stage.Stage;
++import practicasprofesionaleslis.PracticasProfesionalesLIS;
++import practicasprofesionaleslis.modelo.dao.ExpedienteDAO;
+ import practicasprofesionaleslis.modelo.dao.InicioSesionDAO;
+-import practicasprofesionaleslis.modelo.pojo.Usuario;
+-import practicasprofesionaleslis.utilidades.Utilidades;
++import practicasprofesionaleslis.modelo.pojo.Coordinador;
++import practicasprofesionaleslis.modelo.pojo.Estudiante;
++import practicasprofesionaleslis.modelo.pojo.Evaluador;
++import practicasprofesionaleslis.modelo.pojo.ProfesorEE;
++import practicasprofesionaleslis.utilidades.UtilidadesVentanas;
++import practicasprofesionaleslis.utilidades.ValidadorID;
+ 
+ public class FXMLInicioSesionController implements Initializable {
+-    @FXML private Label lbErrorUsuario, lbErrorPassword;
+-    @FXML private TextField tfUsuario;
+-    @FXML private PasswordField tfPassword;
++    @FXML
++    private TextField txtfUsuario;
++    @FXML
++    private PasswordField pwdfPassword;
++    @FXML
++    private Label lblErrorUsuario;
++    @FXML
++    private Label lblErrorPassword;
+ 
+     @Override
+     public void initialize(URL url, ResourceBundle rb) {}    
+     
+-    public void btnVerificarSesion(ActionEvent event) {
+-        String username = tfUsuario.getText();
+-        String password = tfPassword.getText();
+-        if (validarCampos(username, password)) {
+-            validarCredenciales(username, password);
++    @FXML
++    public void clicBtnVerificarSesion(ActionEvent event) {
++        String usuario = txtfUsuario.getText().trim();
++        String contraseña = pwdfPassword.getText();
++        
++        if (validarCampos(usuario, contraseña)) {
++            int tipoUsuario = determinarTipoUsuario(usuario);
++            
++            if (!validarFormatoID(usuario, tipoUsuario)) {
++                return;
++            }
++            
++            switch (tipoUsuario) {
++                case 1: validarCredencialesEstudiante(usuario, contraseña); break;
++                case 2: validarCredencialesCoordinador(usuario, contraseña); break;
++                case 3: validarCredencialesProfesorEE(usuario, contraseña); break;
++                case 4: validarCredencialesEvaluador(usuario, contraseña); break;
++                default: UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.WARNING,
++                        "FORMATO DE USUARIO NO VÁLIDO",
++                        "El formato del ID de usuario no es válido.");
++            }
+         }
+     }
+     
+-    private boolean validarCampos(String username, String password) {
++    private boolean validarCampos(String usuario, String contraseña) {
+         boolean camposValidos = true;
+-        lbErrorUsuario.setText("");
+-        lbErrorPassword.setText("");
++        lblErrorUsuario.setText("");
++        lblErrorPassword.setText("");
+         
+-        if (username.isEmpty()) {
+-            lbErrorUsuario.setText("Usuario obligatorio");
++        if (usuario.isEmpty()) {
++            lblErrorUsuario.setText("Usuario obligatorio");
+             camposValidos = false;
+         }
+-        if (password.isEmpty()) {
+-            lbErrorPassword.setText("Contraseña obligatoria");
++        if (contraseña.isEmpty()) {
++            lblErrorPassword.setText("Contraseña obligatoria");
+             camposValidos = false;
+         }
+         return camposValidos;
+     }
+     
+-    private void validarCredenciales(String username, String password) {
++    private boolean validarFormatoID(String usuario, int tipoUsuario) {
++        boolean formatoValido = false;
++        String mensajeError = "";
++        
++        switch (tipoUsuario) {
++            case 1:
++                formatoValido = ValidadorID.validarIDEstudiante(usuario);
++                mensajeError = "Formato de matrícula del estudiante inválido.";
++                break;
++            case 2:
++                formatoValido = ValidadorID.validarIDCoordinador(usuario);
++                mensajeError = "Formato de número de personal del coordinador inválido.";
++                break;
++            case 3:
++                formatoValido = ValidadorID.validarIDProfesor(usuario);
++                mensajeError = "Formato de número de personal del profesor inválido.";
++                break;
++            case 4: 
++                formatoValido = ValidadorID.validarIDEvaluador(usuario);
++                mensajeError = "Formato de número de personal del evaluador inválido.";
++                break;
++            default: mensajeError = "Formato de usuario no reconocido.";
++        }
++        
++        if (!formatoValido) {
++            UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.WARNING,
++                    "FORMATO INCORRECTO",
++                    mensajeError);
++        }
++        return formatoValido;
++    }
++    
++    private int determinarTipoUsuario(String usuario) {
++        if (usuario.isEmpty()) {
++            return 0;
++        }
++        
++        char primerCaracter = usuario.charAt(0);
++        switch (primerCaracter) {
++            case 'S': return 1;
++            case 'C': return 2;
++            case 'P': return 3;
++            case 'E': return 4;
++            default: return 0;
++        }
++    }
++    
++    private void validarCredencialesEstudiante(String usuario, String contraseña) {
++        try {
++            Estudiante estudiante = InicioSesionDAO.verificarCredencialesEstudiante(usuario, contraseña);
++            
++            if (estudiante != null) {
++                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.INFORMATION,
++                        "CREDENCIALES CORRECTAS",
++                        "Bienvenido(a) " + estudiante.toString() + " al sistema.");
++                String nombreProyecto = ExpedienteDAO.obtenerNombreProyectoPorMatricula(estudiante.getMatricula());
++                irPantallaPrincipalEstudiante(estudiante, nombreProyecto);
++            } else {
++                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.WARNING,
++                        "CREDENCIALES INCORRECTAS",
++                        "Usuario y/o contraseña incorrectos. Por favor, verifique las credenciales.");
++            }
++        } catch (SQLException e) {
++            UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.ERROR,
++                    "ERROR",
++                    e.getMessage());
++        }
++    }
++    
++    private void validarCredencialesCoordinador(String usuario, String contraseña) {
++        try {
++            Coordinador coordinador = InicioSesionDAO.verificarCredencialesCoordinador(usuario, contraseña);
++            
++            if (coordinador != null) {
++                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.INFORMATION,
++                        "CREDENCIALES CORRECTAS",
++                        "Bienvenido(a) " + coordinador.toString() + " al sistema.");
++                irPantallaPrincipalCoordinador(coordinador);
++            } else {
++                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.WARNING,
++                        "CREDENCIALES INCORRECTAS",
++                        "Usuario y/o contraseña incorrectos. Por favor, verifique las credenciales.");
++            }
++        } catch (SQLException e) {
++            UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.ERROR,
++                    "ERROR",
++                    e.getMessage());
++        }
++    }
++    
++    private void validarCredencialesProfesorEE(String usuario, String contraseña) {
+         try {
+-            Usuario usuarioSesion = InicioSesionDAO.verificarCredenciales(username, password);
+-            if (usuarioSesion != null) {
+-                Utilidades.mostrarAlertaSimple(Alert.AlertType.INFORMATION,
+-                        "Credenciales correctas",
+-                        "Bienvenido(a) " + usuarioSesion.toString() + " al sistema.");
+-                irPantallaPrincipal(usuarioSesion);
++            ProfesorEE profesorEE = InicioSesionDAO.verificarCredencialesProfesorEE(usuario, contraseña);
++            
++            if (profesorEE != null) {
++                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.INFORMATION,
++                        "CREDENCIALES CORRECTAS",
++                        "Bienvenido(a) " + profesorEE.toString() + " al sistema.");
++                irPantallaPrincipalProfesorEE(profesorEE);
+             } else {
+-                Utilidades.mostrarAlertaSimple(Alert.AlertType.WARNING,
+-                        "Credenciales incorrectas",
++                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.WARNING,
++                        "CREDENCIALES INCORRECTAS",
+                         "Usuario y/o contraseña incorrectos. Por favor, verifique las credenciales.");
+             }
+         } catch (SQLException e) {
+-            Utilidades.mostrarAlertaSimple(Alert.AlertType.ERROR,
+-                    "Problema de conexión",
+-                    "Error de conexión: " + e.getMessage());
++            UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.ERROR,
++                    "ERROR",
++                    e.getMessage());
+         }
+     }
+     
+-    private void irPantallaPrincipal(Usuario usuario) {
++    private void validarCredencialesEvaluador(String usuario, String contraseña) {
+         try {
+-            Stage escenarioBase = (Stage) tfUsuario.getScene().getWindow();
+-            Parent vista = FXMLLoader.load(getClass().getResource("/practicasprofesionaleslis/vista/FXMLPrincipalEstudiante.fxml"));
++            Evaluador evaluador = InicioSesionDAO.verificarCredencialesEvaluador(usuario, contraseña);
++            
++            if (evaluador != null) {
++                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.INFORMATION,
++                        "CREDENCIALES CORRECTAS",
++                        "Bienvenido(a) " + evaluador.toString() + " al sistema.");
++                irPantallaPrincipalEvaluador(evaluador);
++            } else {
++                UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.WARNING,
++                        "CREDENCIALES INCORRECTAS",
++                        "Usuario y/o contraseña incorrectos. Por favor, verifique las credenciales.");
++            }
++        } catch (SQLException e) {
++            UtilidadesVentanas.mostrarAlertaSimple(Alert.AlertType.ERROR,
++                    "ERROR",
++                    e.getMessage());
++        }
++    }
++    
++    private void irPantallaPrincipalEstudiante(Estudiante estudiante, String nombreProyecto) {
++        try {
++            Stage escenarioBase = (Stage) txtfUsuario.getScene().getWindow();
++            FXMLLoader cargador = new FXMLLoader(PracticasProfesionalesLIS.class.getResource("/practicasprofesionaleslis/vista/FXMLPrincipalEstudiante.fxml"));
++            Parent vista = cargador.load();
++            FXMLPrincipalEstudianteController controlador = cargador.getController();
++            controlador.inicializarDatosEstudiante(estudiante, nombreProyecto);
++            
+             Scene escenaPrincipal = new Scene(vista);
+-            
+             escenarioBase.setScene(escenaPrincipal);
+-            escenarioBase.setTitle("Pantalla Principal");
++            escenarioBase.setTitle("PANTALLA PRINCIPAL - ESTUDIANTE");
++            escenarioBase.setResizable(false);
++            escenarioBase.centerOnScreen();
+             escenarioBase.showAndWait();
++        } catch (IOException e) {
++            System.err.println("Error: " + e.getMessage());
++            e.printStackTrace();
++        }
++    }
++    
++    private void irPantallaPrincipalCoordinador(Coordinador coordinador) {
++        try {
++            Stage escenarioBase = (Stage) txtfUsuario.getScene().getWindow();
++            FXMLLoader cargador = new FXMLLoader(PracticasProfesionalesLIS.class.getResource("/practicasprofesionaleslis/vista/FXMLPrincipalCoordinador.fxml"));
++            Parent vista = cargador.load();
++            FXMLPrincipalCoordinadorController controlador = cargador.getController();
++            controlador.inicializarDatosCoordinador(coordinador);
++            
++            Scene escenaPrincipal = new Scene(vista);
++            escenarioBase.setScene(escenaPrincipal);
++            escenarioBase.setTitle("PANTALLA PRINCIPAL - COORDINADOR");
++            escenarioBase.setResizable(false);
+             escenarioBase.centerOnScreen();
++            escenarioBase.showAndWait();
++        } catch (IOException e) {
++            System.err.println("Error: " + e.getMessage());
++            e.printStackTrace();
++        }
++    }
++    
++    private void irPantallaPrincipalProfesorEE(ProfesorEE profesorEE) {
++        try {
++            Stage escenarioBase = (Stage) txtfUsuario.getScene().getWindow();
++            FXMLLoader cargador = new FXMLLoader(PracticasProfesionalesLIS.class.getResource("/practicasprofesionaleslis/vista/FXMLPrincipalProfesorEE.fxml"));
++            Parent vista = cargador.load();
++            FXMLPrincipalProfesorEEController controlador = cargador.getController();
++            controlador.inicializarDatosProfesorEE(profesorEE);
++            
++            Scene escenaPrincipal = new Scene(vista);
++            escenarioBase.setScene(escenaPrincipal);
++            escenarioBase.setTitle("PANTALLA PRINCIPAL - PROFESOR EE");
++            escenarioBase.setResizable(false);
++            escenarioBase.centerOnScreen();
++            escenarioBase.showAndWait();
++        } catch (IOException e) {
++            System.err.println("Error: " + e.getMessage());
++            e.printStackTrace();
++        }
++    }
++    
++    private void irPantallaPrincipalEvaluador(Evaluador evaluador) {
++        try {
++            Stage escenarioBase = (Stage) txtfUsuario.getScene().getWindow();
++            FXMLLoader cargador = new FXMLLoader(PracticasProfesionalesLIS.class.getResource("/practicasprofesionaleslis/vista/FXMLPrincipalEvaluador.fxml"));
++            Parent vista = cargador.load();
++            FXMLPrincipalEvaluadorController controlador = cargador.getController();
++            controlador.inicializarDatosEvaluador(evaluador);
++            
++            Scene escenaPrincipal = new Scene(vista);
++            escenarioBase.setScene(escenaPrincipal);
++            escenarioBase.setTitle("PANTALLA PRINCIPAL - EVALUADOR");
++            escenarioBase.setResizable(false);
++            escenarioBase.centerOnScreen();
++            escenarioBase.showAndWait();
+         } catch (IOException e) {
+             System.err.println("Error: " + e.getMessage());
+             e.printStackTrace();
+Index: src/practicasprofesionaleslis/utilidades/Utilidades.java
+===================================================================
+diff --git a/src/practicasprofesionaleslis/utilidades/Utilidades.java b/src/practicasprofesionaleslis/utilidades/Utilidades.java
+deleted file mode 100644
+--- a/src/practicasprofesionaleslis/utilidades/Utilidades.java	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
++++ /dev/null	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
+@@ -1,16 +0,0 @@
+-package practicasprofesionaleslis.utilidades;
+-
+-import java.util.Optional;
+-import javafx.scene.control.Alert;
+-import javafx.scene.control.ButtonType;
+-
+-public class Utilidades {
+-    public static Optional<ButtonType> mostrarAlertaSimple(Alert.AlertType tipo,
+-            String titulo, String contenido) {
+-        Alert alerta = new Alert(tipo);
+-        alerta.setTitle(titulo);
+-        alerta.setHeaderText(null);
+-        alerta.setContentText(contenido);
+-        return alerta.showAndWait();
+-    }
+-}
+Index: src/practicasprofesionaleslis/modelo/pojo/Usuario.java
+===================================================================
+diff --git a/src/practicasprofesionaleslis/modelo/pojo/Usuario.java b/src/practicasprofesionaleslis/modelo/pojo/Usuario.java
+deleted file mode 100644
+--- a/src/practicasprofesionaleslis/modelo/pojo/Usuario.java	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
++++ /dev/null	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
+@@ -1,74 +0,0 @@
+-package practicasprofesionaleslis.modelo.pojo;
+-
+-public class Usuario {
+-    private int idUsuario;
+-    private String nombre;
+-    private String apellidoPaterno;
+-    private String apellidoMaterno;
+-    private String username;
+-    private String password;
+-
+-    public Usuario() {}
+-    
+-    public Usuario(int idUsuario, String nombre, String apellidoPaterno, String apellidoMaterno, String username, String password) {
+-        this.idUsuario = idUsuario;
+-        this.nombre = nombre;
+-        this.apellidoPaterno = apellidoPaterno;
+-        this.apellidoMaterno = apellidoMaterno;
+-        this.username = username;
+-        this.password = password;
+-    }
+-
+-    public int getIdUsuario() {
+-        return idUsuario;
+-    }
+-
+-    public void setIdUsuario(int idUsuario) {
+-        this.idUsuario = idUsuario;
+-    }
+-
+-    public String getNombre() {
+-        return nombre;
+-    }
+-
+-    public void setNombre(String nombre) {
+-        this.nombre = nombre;
+-    }
+-
+-    public String getApellidoPaterno() {
+-        return apellidoPaterno;
+-    }
+-
+-    public void setApellidoPaterno(String apellidoPaterno) {
+-        this.apellidoPaterno = apellidoPaterno;
+-    }
+-
+-    public String getApellidoMaterno() {
+-        return apellidoMaterno;
+-    }
+-
+-    public void setApellidoMaterno(String apellidoMaterno) {
+-        this.apellidoMaterno = apellidoMaterno;
+-    }
+-
+-    public String getUsername() {
+-        return username;
+-    }
+-
+-    public void setUsername(String username) {
+-        this.username = username;
+-    }
+-
+-    public String getPassword() {
+-        return password;
+-    }
+-
+-    public void setPassword(String password) {
+-        this.password = password;
+-    }
+-
+-    @Override
+-    public String toString() {
+-        return String.format("%s %s %s", nombre, apellidoPaterno, apellidoMaterno);
+-    }
+-}
+Index: src/practicasprofesionaleslis/modelo/pojo/Estudiante.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/modelo/pojo/Estudiante.java b/src/practicasprofesionaleslis/modelo/pojo/Estudiante.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/modelo/pojo/Estudiante.java	(date 1748475410327)
+@@ -0,0 +1,95 @@
++package practicasprofesionaleslis.modelo.pojo;
++
++public class Estudiante {
++    private int id;
++    private String matricula;
++    private String nombre;
++    private String apellidoPaterno;
++    private String apellidoMaterno;
++    private String correoInstitucional;
++    private String contraseña;
++    private int semestre;
++
++    public Estudiante() {
++    }
++
++    public Estudiante(int id, String matricula, String nombre, String apellidoPaterno, String apellidoMaterno, String correoInstitucional, String contraseña, int semestre) {
++        this.id = id;
++        this.matricula = matricula;
++        this.nombre = nombre;
++        this.apellidoPaterno = apellidoPaterno;
++        this.apellidoMaterno = apellidoMaterno;
++        this.correoInstitucional = correoInstitucional;
++        this.contraseña = contraseña;
++        this.semestre = semestre;
++    }
++
++    public int getId() {
++        return id;
++    }
++
++    public void setId(int id) {
++        this.id = id;
++    }
++
++    public String getMatricula() {
++        return matricula;
++    }
++
++    public void setMatricula(String matricula) {
++        this.matricula = matricula;
++    }
++
++    public String getNombre() {
++        return nombre;
++    }
++
++    public void setNombre(String nombre) {
++        this.nombre = nombre;
++    }
++
++    public String getApellidoPaterno() {
++        return apellidoPaterno;
++    }
++
++    public void setApellidoPaterno(String apellidoPaterno) {
++        this.apellidoPaterno = apellidoPaterno;
++    }
++
++    public String getApellidoMaterno() {
++        return apellidoMaterno;
++    }
++
++    public void setApellidoMaterno(String apellidoMaterno) {
++        this.apellidoMaterno = apellidoMaterno;
++    }
++
++    public String getCorreoInstitucional() {
++        return correoInstitucional;
++    }
++
++    public void setCorreoInstitucional(String correoInstitucional) {
++        this.correoInstitucional = correoInstitucional;
++    }
++
++    public String getContraseña() {
++        return contraseña;
++    }
++
++    public void setContraseña(String contraseña) {
++        this.contraseña = contraseña;
++    }
++
++    public int getSemestre() {
++        return semestre;
++    }
++
++    public void setSemestre(int semestre) {
++        this.semestre = semestre;
++    }
++
++    @Override
++    public String toString() {
++        return String.format("%s %s %s", nombre, apellidoPaterno, apellidoMaterno);
++    }
++}
+Index: src/practicasprofesionaleslis/modelo/dao/InicioSesionDAO.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package practicasprofesionaleslis.modelo.dao;\n\nimport java.sql.Connection;\nimport java.sql.PreparedStatement;\nimport java.sql.ResultSet;\nimport java.sql.SQLException;\nimport practicasprofesionaleslis.modelo.ConexionBD;\nimport practicasprofesionaleslis.modelo.pojo.Usuario;\n\npublic class InicioSesionDAO {\n    public static Usuario verificarCredenciales(String username, String password) throws SQLException {\n        Usuario usuarioSesion = null;\n        Connection conexionBD = ConexionBD.abrirConexion();\n        \n        if (conexionBD != null) {\n            String consulta = \"SELECT id_usuario, nombre, apellido_paterno, apellido_materno, username \" +\n                              \"FROM usuario \" +\n                              \"WHERE username = ? AND password = ?;\";\n            PreparedStatement sentencia = conexionBD.prepareStatement(consulta);\n            sentencia.setString(1, username);\n            sentencia.setString(2, password);\n            ResultSet resultado = sentencia.executeQuery();\n            \n            if (resultado.next()) {\n                usuarioSesion = new Usuario();\n                usuarioSesion.setIdUsuario(resultado.getInt(1));\n                usuarioSesion.setNombre(resultado.getString(2));\n                usuarioSesion.setApellidoPaterno(resultado.getString(3));\n                usuarioSesion.setApellidoMaterno((resultado.getString(4) != null) ?\n                                resultado.getString(4) : \"\");\n                usuarioSesion.setUsername(resultado.getString(5));\n            }\n        } else {\n            throw new SQLException(\"Error: Sin conexión a la base de datos.\");\n        }\n        return usuarioSesion;\n    }\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/modelo/dao/InicioSesionDAO.java b/src/practicasprofesionaleslis/modelo/dao/InicioSesionDAO.java
+--- a/src/practicasprofesionaleslis/modelo/dao/InicioSesionDAO.java	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
++++ b/src/practicasprofesionaleslis/modelo/dao/InicioSesionDAO.java	(date 1748475410327)
+@@ -5,34 +5,135 @@
+ import java.sql.ResultSet;
+ import java.sql.SQLException;
+ import practicasprofesionaleslis.modelo.ConexionBD;
+-import practicasprofesionaleslis.modelo.pojo.Usuario;
++import practicasprofesionaleslis.modelo.pojo.Coordinador;
++import practicasprofesionaleslis.modelo.pojo.Estudiante;
++import practicasprofesionaleslis.modelo.pojo.Evaluador;
++import practicasprofesionaleslis.modelo.pojo.ProfesorEE;
+ 
+ public class InicioSesionDAO {
+-    public static Usuario verificarCredenciales(String username, String password) throws SQLException {
+-        Usuario usuarioSesion = null;
++
++    public static Estudiante verificarCredencialesEstudiante(String matricula, String contraseña) throws SQLException {
++        Estudiante estudiante = null;
++        Connection conexionBD = ConexionBD.abrirConexion();
++        
++        if (conexionBD != null) {
++            String consulta = "SELECT id, matricula, nombre, apellidoPaterno, "
++                    + "apellidoMaterno, correoInstitucional, semestre "
++                    + "FROM estudiante "
++                    + "WHERE matricula = ? AND contrasena = ?";
++            PreparedStatement sentencia = conexionBD.prepareStatement(consulta);
++            sentencia.setString(1, matricula);
++            sentencia.setString(2, contraseña);
++            
++            ResultSet resultado = sentencia.executeQuery();
++            if (resultado.next()) {
++                estudiante = new Estudiante();
++                estudiante.setId(resultado.getInt("id"));
++                estudiante.setMatricula(resultado.getString("matricula"));
++                estudiante.setNombre(resultado.getString("nombre"));
++                estudiante.setApellidoPaterno(resultado.getString("apellidoPaterno"));
++                estudiante.setApellidoMaterno((resultado.getString("apellidoMaterno") != null) ?
++                        resultado.getString("apellidoMaterno") : "");
++                estudiante.setCorreoInstitucional(resultado.getString("correoInstitucional"));
++                estudiante.setSemestre(resultado.getInt("semestre"));
++            }
++        } else {
++                throw new SQLException("Su solicitud no puede ser procesada en este momento. Intente más tarde.");
++        }
++        
++        return estudiante;
++    }
++    
++    public static Coordinador verificarCredencialesCoordinador(String numeroPersonal, String contraseña) throws SQLException {
++        Coordinador coordinador = null;
++        Connection conexionBD = ConexionBD.abrirConexion();
++        
++        if (conexionBD != null) {
++            String consulta = "SELECT id, numeroPersonal, nombre, apellidoPaterno, "
++                    + "apellidoMaterno, correoInstitucional "
++                    + "FROM coordinador "
++                    + "WHERE numeroPersonal = ? AND contrasena = ?";
++            PreparedStatement sentencia = conexionBD.prepareStatement(consulta);
++            sentencia.setString(1, numeroPersonal);
++            sentencia.setString(2, contraseña);
++            
++            ResultSet resultado = sentencia.executeQuery();
++            if (resultado.next()) {
++                coordinador = new Coordinador();
++                coordinador.setId(resultado.getInt("id"));
++                coordinador.setNumeroPersonal(resultado.getString("numeroPersonal"));
++                coordinador.setNombre(resultado.getString("nombre"));
++                coordinador.setApellidoPaterno(resultado.getString("apellidoPaterno"));
++                coordinador.setApellidoMaterno((resultado.getString("apellidoMaterno") != null) ?
++                        resultado.getString("apellidoMaterno") : "");
++                coordinador.setCorreoInstitucional(resultado.getString("correoInstitucional"));
++            }
++        } else {
++                throw new SQLException("Su solicitud no puede ser procesada en este momento. Intente más tarde.");
++        }
++        
++        return coordinador;
++    }
++    
++    public static ProfesorEE verificarCredencialesProfesorEE(String numeroPersonal, String contraseña) throws SQLException {
++        ProfesorEE profesorEE = null;
+         Connection conexionBD = ConexionBD.abrirConexion();
+         
+         if (conexionBD != null) {
+-            String consulta = "SELECT id_usuario, nombre, apellido_paterno, apellido_materno, username " +
+-                              "FROM usuario " +
+-                              "WHERE username = ? AND password = ?;";
++            String consulta = "SELECT id, numeroPersonal, nombre, apellidoPaterno, "
++                    + "apellidoMaterno, correoInstitucional "
++                    + "FROM profesoree "
++                    + "WHERE numeroPersonal = ? AND contrasena = ?";
+             PreparedStatement sentencia = conexionBD.prepareStatement(consulta);
+-            sentencia.setString(1, username);
+-            sentencia.setString(2, password);
++            sentencia.setString(1, numeroPersonal);
++            sentencia.setString(2, contraseña);
++            
+             ResultSet resultado = sentencia.executeQuery();
+-            
+             if (resultado.next()) {
+-                usuarioSesion = new Usuario();
+-                usuarioSesion.setIdUsuario(resultado.getInt(1));
+-                usuarioSesion.setNombre(resultado.getString(2));
+-                usuarioSesion.setApellidoPaterno(resultado.getString(3));
+-                usuarioSesion.setApellidoMaterno((resultado.getString(4) != null) ?
+-                                resultado.getString(4) : "");
+-                usuarioSesion.setUsername(resultado.getString(5));
++                profesorEE = new ProfesorEE();
++                profesorEE.setId(resultado.getInt("id"));
++                profesorEE.setNumeroPersonal(resultado.getString("numeroPersonal"));
++                profesorEE.setNombre(resultado.getString("nombre"));
++                profesorEE.setApellidoPaterno(resultado.getString("apellidoPaterno"));
++                profesorEE.setApellidoMaterno((resultado.getString("apellidoMaterno") != null) ?
++                        resultado.getString("apellidoMaterno") : "");
++                profesorEE.setCorreoInstitucional(resultado.getString("correoInstitucional"));
+             }
+         } else {
+-            throw new SQLException("Error: Sin conexión a la base de datos.");
++                throw new SQLException("Su solicitud no puede ser procesada en este momento. Intente más tarde.");
+         }
+-        return usuarioSesion;
++        
++        return profesorEE;
+     }
++    
++    public static Evaluador verificarCredencialesEvaluador(String numeroPersonal, String contraseña) throws SQLException {
++        Evaluador evaluador = null;
++        Connection conexionBD = ConexionBD.abrirConexion();
++        
++        if (conexionBD != null) {
++            String consulta = "SELECT id, numeroPersonal, nombre, apellidoPaterno, "
++                    + "apellidoMaterno, correoInstitucional "
++                    + "FROM evaluador "
++                    + "WHERE numeroPersonal = ? AND contrasena = ?";
++            PreparedStatement sentencia = conexionBD.prepareStatement(consulta);
++            sentencia.setString(1, numeroPersonal);
++            sentencia.setString(2, contraseña);
++            
++            ResultSet resultado = sentencia.executeQuery();
++            if (resultado.next()) {
++                evaluador = new Evaluador();
++                evaluador.setId(resultado.getInt("id"));
++                evaluador.setNumeroPersonal(resultado.getString("numeroPersonal"));
++                evaluador.setNombre(resultado.getString("nombre"));
++                evaluador.setApellidoPaterno(resultado.getString("apellidoPaterno"));
++                evaluador.setApellidoMaterno((resultado.getString("apellidoMaterno") != null) ?
++                        resultado.getString("apellidoMaterno") : "");
++                evaluador.setCorreoInstitucional(resultado.getString("correoInstitucional"));
++            }
++        } else {
++                throw new SQLException("Su solicitud no puede ser procesada en este momento. Intente más tarde.");
++        }
++        
++        return evaluador;
++    }
+ }
+\ No newline at end of file
+Index: src/practicasprofesionaleslis/modelo/pojo/OrganizacionVinculada.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/modelo/pojo/OrganizacionVinculada.java b/src/practicasprofesionaleslis/modelo/pojo/OrganizacionVinculada.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/modelo/pojo/OrganizacionVinculada.java	(date 1748475410327)
+@@ -0,0 +1,70 @@
++package practicasprofesionaleslis.modelo.pojo;
++
++public class OrganizacionVinculada {
++    private int id;
++    private int numProyectos;
++    private String razonSocial;
++    private String correoElectronico;
++    private String telefono;
++    private String domicilioFiscal;
++
++    public OrganizacionVinculada() {
++    }
++
++    public OrganizacionVinculada(int id, int numProyectos, String razonSocial, String correoElectronico, String telefono, String domicilioFiscal) {
++        this.id = id;
++        this.numProyectos = numProyectos;
++        this.razonSocial = razonSocial;
++        this.correoElectronico = correoElectronico;
++        this.telefono = telefono;
++        this.domicilioFiscal = domicilioFiscal;
++    }
++
++    public int getId() {
++        return id;
++    }
++
++    public void setId(int id) {
++        this.id = id;
++    }
++
++    public int getNumProyectos() {
++        return numProyectos;
++    }
++
++    public void setNumProyectos(int numProyectos) {
++        this.numProyectos = numProyectos;
++    }
++
++    public String getRazonSocial() {
++        return razonSocial;
++    }
++
++    public void setRazonSocial(String razonSocial) {
++        this.razonSocial = razonSocial;
++    }
++
++    public String getCorreoElectronico() {
++        return correoElectronico;
++    }
++
++    public void setCorreoElectronico(String correoElectronico) {
++        this.correoElectronico = correoElectronico;
++    }
++
++    public String getTelefono() {
++        return telefono;
++    }
++
++    public void setTelefono(String telefono) {
++        this.telefono = telefono;
++    }
++
++    public String getDomicilioFiscal() {
++        return domicilioFiscal;
++    }
++
++    public void setDomicilioFiscal(String domicilioFiscal) {
++        this.domicilioFiscal = domicilioFiscal;
++    }
++}
+Index: src/practicasprofesionaleslis/modelo/pojo/Proyecto.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/modelo/pojo/Proyecto.java b/src/practicasprofesionaleslis/modelo/pojo/Proyecto.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/modelo/pojo/Proyecto.java	(date 1748475410327)
+@@ -0,0 +1,70 @@
++package practicasprofesionaleslis.modelo.pojo;
++
++public class Proyecto {
++    private int id;
++    private String nombre;
++    private int numIntegrantes;
++    private String descripcion;
++    private ResponsableProyecto responsableProyecto;
++    private OrganizacionVinculada organizacionVinculada;
++
++    public Proyecto() {
++    }
++
++    public Proyecto(int id, String nombre, int numIntegrantes, String descripcion, ResponsableProyecto responsableProyecto, OrganizacionVinculada organizacionVinculada) {
++        this.id = id;
++        this.nombre = nombre;
++        this.numIntegrantes = numIntegrantes;
++        this.descripcion = descripcion;
++        this.responsableProyecto = responsableProyecto;
++        this.organizacionVinculada = organizacionVinculada;
++    }
++
++    public int getId() {
++        return id;
++    }
++
++    public void setId(int id) {
++        this.id = id;
++    }
++
++    public String getNombre() {
++        return nombre;
++    }
++
++    public void setNombre(String nombre) {
++        this.nombre = nombre;
++    }
++
++    public int getNumIntegrantes() {
++        return numIntegrantes;
++    }
++
++    public void setNumIntegrantes(int numIntegrantes) {
++        this.numIntegrantes = numIntegrantes;
++    }
++
++    public String getDescripcion() {
++        return descripcion;
++    }
++
++    public void setDescripcion(String descripcion) {
++        this.descripcion = descripcion;
++    }
++
++    public ResponsableProyecto getResponsableProyecto() {
++        return responsableProyecto;
++    }
++
++    public void setResponsableProyecto(ResponsableProyecto responsableProyecto) {
++        this.responsableProyecto = responsableProyecto;
++    }
++
++    public OrganizacionVinculada getOrganizacionVinculada() {
++        return organizacionVinculada;
++    }
++
++    public void setOrganizacionVinculada(OrganizacionVinculada organizacionVinculada) {
++        this.organizacionVinculada = organizacionVinculada;
++    }
++}
+Index: src/practicasprofesionaleslis/modelo/pojo/Evaluador.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/modelo/pojo/Evaluador.java b/src/practicasprofesionaleslis/modelo/pojo/Evaluador.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/modelo/pojo/Evaluador.java	(date 1748475410327)
+@@ -0,0 +1,85 @@
++package practicasprofesionaleslis.modelo.pojo;
++
++public class Evaluador {
++    private int id;
++    private String numeroPersonal;
++    private String nombre;
++    private String apellidoPaterno;
++    private String apellidoMaterno;
++    private String correoInstitucional;
++    private String contraseña;
++
++    public Evaluador() {
++    }
++
++    public Evaluador(int id, String numeroPersonal, String nombre, String apellidoPaterno, String apellidoMaterno, String correoInstitucional, String contraseña) {
++        this.id = id;
++        this.numeroPersonal = numeroPersonal;
++        this.nombre = nombre;
++        this.apellidoPaterno = apellidoPaterno;
++        this.apellidoMaterno = apellidoMaterno;
++        this.correoInstitucional = correoInstitucional;
++        this.contraseña = contraseña;
++    }
++
++    public int getId() {
++        return id;
++    }
++
++    public void setId(int id) {
++        this.id = id;
++    }
++
++    public String getNumeroPersonal() {
++        return numeroPersonal;
++    }
++
++    public void setNumeroPersonal(String numeroPersonal) {
++        this.numeroPersonal = numeroPersonal;
++    }
++
++    public String getNombre() {
++        return nombre;
++    }
++
++    public void setNombre(String nombre) {
++        this.nombre = nombre;
++    }
++
++    public String getApellidoPaterno() {
++        return apellidoPaterno;
++    }
++
++    public void setApellidoPaterno(String apellidoPaterno) {
++        this.apellidoPaterno = apellidoPaterno;
++    }
++
++    public String getApellidoMaterno() {
++        return apellidoMaterno;
++    }
++
++    public void setApellidoMaterno(String apellidoMaterno) {
++        this.apellidoMaterno = apellidoMaterno;
++    }
++
++    public String getCorreoInstitucional() {
++        return correoInstitucional;
++    }
++
++    public void setCorreoInstitucional(String correoInstitucional) {
++        this.correoInstitucional = correoInstitucional;
++    }
++
++    public String getContraseña() {
++        return contraseña;
++    }
++
++    public void setContraseña(String contraseña) {
++        this.contraseña = contraseña;
++    }
++
++    @Override
++    public String toString() {
++        return String.format("%s %s %s", nombre, apellidoPaterno, apellidoMaterno);
++    }
++}
+Index: src/practicasprofesionaleslis/modelo/pojo/ResponsableProyecto.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/modelo/pojo/ResponsableProyecto.java b/src/practicasprofesionaleslis/modelo/pojo/ResponsableProyecto.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/modelo/pojo/ResponsableProyecto.java	(date 1748475410327)
+@@ -0,0 +1,70 @@
++package practicasprofesionaleslis.modelo.pojo;
++
++public class ResponsableProyecto {
++    private int id;
++    private String nombre;
++    private String apellidoPaterno;
++    private String apellidoMaterno;
++    private String puesto;
++    private String correoElectronico;
++
++    public ResponsableProyecto() {
++    }
++
++    public ResponsableProyecto(int id, String nombre, String apellidoPaterno, String apellidoMaterno, String puesto, String correoElectronico) {
++        this.id = id;
++        this.nombre = nombre;
++        this.apellidoPaterno = apellidoPaterno;
++        this.apellidoMaterno = apellidoMaterno;
++        this.puesto = puesto;
++        this.correoElectronico = correoElectronico;
++    }
++
++    public int getId() {
++        return id;
++    }
++
++    public void setId(int id) {
++        this.id = id;
++    }
++
++    public String getNombre() {
++        return nombre;
++    }
++
++    public void setNombre(String nombre) {
++        this.nombre = nombre;
++    }
++
++    public String getApellidoPaterno() {
++        return apellidoPaterno;
++    }
++
++    public void setApellidoPaterno(String apellidoPaterno) {
++        this.apellidoPaterno = apellidoPaterno;
++    }
++
++    public String getApellidoMaterno() {
++        return apellidoMaterno;
++    }
++
++    public void setApellidoMaterno(String apellidoMaterno) {
++        this.apellidoMaterno = apellidoMaterno;
++    }
++
++    public String getPuesto() {
++        return puesto;
++    }
++
++    public void setPuesto(String puesto) {
++        this.puesto = puesto;
++    }
++
++    public String getCorreoElectronico() {
++        return correoElectronico;
++    }
++
++    public void setCorreoElectronico(String correoElectronico) {
++        this.correoElectronico = correoElectronico;
++    }
++}
+Index: src/practicasprofesionaleslis/modelo/pojo/Expediente.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/modelo/pojo/Expediente.java b/src/practicasprofesionaleslis/modelo/pojo/Expediente.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/modelo/pojo/Expediente.java	(date 1748475410327)
+@@ -0,0 +1,95 @@
++package practicasprofesionaleslis.modelo.pojo;
++
++public class Expediente {
++    
++    public enum Estado { ACTIVO, BAJA, CONCLUIDO }
++    
++    private int id;
++    private String fechaCreacion;
++    private Estado estado;
++    private int calificacion;
++    private int horasAcumuladas;
++    private Proyecto proyecto;
++    private Estudiante estudiante;
++    private ExperienciaEducativa experienciaEducativa;
++
++    public Expediente() {
++    }
++
++    public Expediente(int id, String fechaCreacion, Estado estado, int calificacion, int horasAcumuladas, Proyecto proyecto, Estudiante estudiante, ExperienciaEducativa experienciaEducativa) {
++        this.id = id;
++        this.fechaCreacion = fechaCreacion;
++        this.estado = estado;
++        this.calificacion = calificacion;
++        this.horasAcumuladas = horasAcumuladas;
++        this.proyecto = proyecto;
++        this.estudiante = estudiante;
++        this.experienciaEducativa = experienciaEducativa;
++    }
++
++    public int getId() {
++        return id;
++    }
++
++    public void setId(int id) {
++        this.id = id;
++    }
++
++    public String getFechaCreacion() {
++        return fechaCreacion;
++    }
++
++    public void setFechaCreacion(String fechaCreacion) {
++        this.fechaCreacion = fechaCreacion;
++    }
++
++    public Enum getEstado() {
++        return estado;
++    }
++
++    public void setEstado(Estado estado) {
++        this.estado = estado;
++    }
++
++    public int getCalificacion() {
++        return calificacion;
++    }
++
++    public void setCalificacion(int calificacion) {
++        this.calificacion = calificacion;
++    }
++
++    public int getHorasAcumuladas() {
++        return horasAcumuladas;
++    }
++
++    public void setHorasAcumuladas(int horasAcumuladas) {
++        this.horasAcumuladas = horasAcumuladas;
++    }
++
++    public Proyecto getProyecto() {
++        return proyecto;
++    }
++
++    public void setProyecto(Proyecto proyecto) {
++        this.proyecto = proyecto;
++    }
++
++    public Estudiante getEstudiante() {
++        return estudiante;
++    }
++
++    public void setEstudiante(Estudiante estudiante) {
++        this.estudiante = estudiante;
++    }
++
++    public ExperienciaEducativa getExperienciaEducativa() {
++        return experienciaEducativa;
++    }
++
++    public void setExperienciaEducativa(ExperienciaEducativa experienciaEducativa) {
++        this.experienciaEducativa = experienciaEducativa;
++    }
++    
++    
++}
+Index: src/practicasprofesionaleslis/modelo/pojo/ProfesorEE.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/modelo/pojo/ProfesorEE.java b/src/practicasprofesionaleslis/modelo/pojo/ProfesorEE.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/modelo/pojo/ProfesorEE.java	(date 1748475410327)
+@@ -0,0 +1,85 @@
++package practicasprofesionaleslis.modelo.pojo;
++
++public class ProfesorEE {
++    private int id;
++    private String numeroPersonal;
++    private String nombre;
++    private String apellidoPaterno;
++    private String apellidoMaterno;
++    private String correoInstitucional;
++    private String contraseña;
++
++    public ProfesorEE() {
++    }
++
++    public ProfesorEE(int id, String numeroPersonal, String nombre, String apellidoPaterno, String apellidoMaterno, String correoInstitucional, String contraseña) {
++        this.id = id;
++        this.numeroPersonal = numeroPersonal;
++        this.nombre = nombre;
++        this.apellidoPaterno = apellidoPaterno;
++        this.apellidoMaterno = apellidoMaterno;
++        this.correoInstitucional = correoInstitucional;
++        this.contraseña = contraseña;
++    }
++
++    public int getId() {
++        return id;
++    }
++
++    public void setId(int id) {
++        this.id = id;
++    }
++
++    public String getNumeroPersonal() {
++        return numeroPersonal;
++    }
++
++    public void setNumeroPersonal(String numeroPersonal) {
++        this.numeroPersonal = numeroPersonal;
++    }
++
++    public String getNombre() {
++        return nombre;
++    }
++
++    public void setNombre(String nombre) {
++        this.nombre = nombre;
++    }
++
++    public String getApellidoPaterno() {
++        return apellidoPaterno;
++    }
++
++    public void setApellidoPaterno(String apellidoPaterno) {
++        this.apellidoPaterno = apellidoPaterno;
++    }
++
++    public String getApellidoMaterno() {
++        return apellidoMaterno;
++    }
++
++    public void setApellidoMaterno(String apellidoMaterno) {
++        this.apellidoMaterno = apellidoMaterno;
++    }
++
++    public String getCorreoInstitucional() {
++        return correoInstitucional;
++    }
++
++    public void setCorreoInstitucional(String correoInstitucional) {
++        this.correoInstitucional = correoInstitucional;
++    }
++
++    public String getContraseña() {
++        return contraseña;
++    }
++
++    public void setContraseña(String contraseña) {
++        this.contraseña = contraseña;
++    }
++
++    @Override
++    public String toString() {
++        return String.format("%s %s %s", nombre, apellidoPaterno, apellidoMaterno);
++    }
++}
+Index: src/practicasprofesionaleslis/controlador/FXMLPrincipalEstudianteController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package practicasprofesionaleslis.controlador;\n\nimport java.io.IOException;\nimport java.net.URL;\nimport java.util.ResourceBundle;\nimport javafx.event.ActionEvent;\nimport javafx.fxml.FXML;\nimport javafx.fxml.FXMLLoader;\nimport javafx.fxml.Initializable;\nimport javafx.scene.Parent;\nimport javafx.scene.Scene;\nimport javafx.scene.control.Alert;\nimport javafx.scene.control.ButtonType;\nimport javafx.scene.control.Label;\nimport javafx.stage.Stage;\nimport practicasprofesionaleslis.utilidades.Utilidades;\n\npublic class FXMLPrincipalEstudianteController implements Initializable {\n    @FXML private Label lbNombreEstudiante;\n    \n    @Override\n    public void initialize(URL url, ResourceBundle rb) {}\n    \n    public void btnCerrarSesion(ActionEvent event) {\n        Alert.AlertType tipo = Alert.AlertType.CONFIRMATION;\n        String titulo = \"Cerrar Sesión\";\n        String contenido = \"¿Estás seguro que deseas cerrar sesión?\";\n\n        if (Utilidades.mostrarAlertaSimple(tipo, titulo, contenido).get() == ButtonType.OK) {\n            irInicioSesion();\n        }\n    }\n\n    private void irInicioSesion() {\n        try {\n            Stage escenarioBase = (Stage) lbNombreEstudiante.getScene().getWindow();\n            Parent vista = FXMLLoader.load(getClass().getResource(\"/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml\"));\n            Scene escenaPrincipal = new Scene(vista);\n            \n            escenarioBase.setScene(escenaPrincipal);\n            escenarioBase.setTitle(\"Pantalla Principal - Estudiante\");\n            escenarioBase.showAndWait();\n            escenarioBase.centerOnScreen();\n        } catch (IOException e) {\n            e.printStackTrace();\n            System.out.println(\"Error: \" + e.getMessage());\n        }\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/controlador/FXMLPrincipalEstudianteController.java b/src/practicasprofesionaleslis/controlador/FXMLPrincipalEstudianteController.java
+--- a/src/practicasprofesionaleslis/controlador/FXMLPrincipalEstudianteController.java	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
++++ b/src/practicasprofesionaleslis/controlador/FXMLPrincipalEstudianteController.java	(date 1748475410327)
+@@ -1,49 +1,65 @@
+ package practicasprofesionaleslis.controlador;
+ 
+-import java.io.IOException;
+ import java.net.URL;
+ import java.util.ResourceBundle;
+ import javafx.event.ActionEvent;
+ import javafx.fxml.FXML;
+-import javafx.fxml.FXMLLoader;
+ import javafx.fxml.Initializable;
+-import javafx.scene.Parent;
+-import javafx.scene.Scene;
+ import javafx.scene.control.Alert;
+ import javafx.scene.control.ButtonType;
+ import javafx.scene.control.Label;
+-import javafx.stage.Stage;
+-import practicasprofesionaleslis.utilidades.Utilidades;
++import javafx.scene.image.ImageView;
++import practicasprofesionaleslis.modelo.pojo.Estudiante;
++import practicasprofesionaleslis.utilidades.UtilidadesVentanas;
+ 
+ public class FXMLPrincipalEstudianteController implements Initializable {
+-    @FXML private Label lbNombreEstudiante;
++    private Estudiante estudiante;
++    
++    @FXML
++    private ImageView imgFotoPerfil;
++    @FXML
++    private Label lblNombreEstudiante;
++    @FXML
++    private Label lblMatricula;
++    @FXML
++    private Label lblProyecto;
+     
+     @Override
+     public void initialize(URL url, ResourceBundle rb) {}
+     
+-    public void btnCerrarSesion(ActionEvent event) {
++    public void inicializarDatosEstudiante(Estudiante estudiante, String nombreProyecto) {
++        this.estudiante = estudiante;
++        if (estudiante != null && !nombreProyecto.isEmpty()) {
++            lblNombreEstudiante.setText(estudiante.toString());
++            lblMatricula.setText(estudiante.getMatricula());
++            lblProyecto.setText(nombreProyecto);
++        }
++    }
++
++    @FXML
++    private void clicBtnCerrarSesion(ActionEvent event) {
+         Alert.AlertType tipo = Alert.AlertType.CONFIRMATION;
+-        String titulo = "Cerrar Sesión";
++        String titulo = "CERRAR SESIÓN";
+         String contenido = "¿Estás seguro que deseas cerrar sesión?";
+ 
+-        if (Utilidades.mostrarAlertaSimple(tipo, titulo, contenido).get() == ButtonType.OK) {
+-            irInicioSesion();
++        if (UtilidadesVentanas.mostrarAlertaSimple(tipo, titulo, contenido).get() == ButtonType.OK) {
++            UtilidadesVentanas.irInicioSesion(lblProyecto);
+         }
+     }
++
++    @FXML
++    private void clicBtnConsultarAvance(ActionEvent event) {
++    }
+ 
+-    private void irInicioSesion() {
+-        try {
+-            Stage escenarioBase = (Stage) lbNombreEstudiante.getScene().getWindow();
+-            Parent vista = FXMLLoader.load(getClass().getResource("/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml"));
+-            Scene escenaPrincipal = new Scene(vista);
+-            
+-            escenarioBase.setScene(escenaPrincipal);
+-            escenarioBase.setTitle("Pantalla Principal - Estudiante");
+-            escenarioBase.showAndWait();
+-            escenarioBase.centerOnScreen();
+-        } catch (IOException e) {
+-            e.printStackTrace();
+-            System.out.println("Error: " + e.getMessage());
+-        }
++    @FXML
++    private void clicBtnActualizarExpediente(ActionEvent event) {
++    }
++
++    @FXML
++    private void clicBtnEvaluarOrganizacionVinculada(ActionEvent event) {
++    }
++
++    @FXML
++    private void clicBtnGenerarFormatoEvaluacion(ActionEvent event) {
+     }
+ }
+Index: src/practicasprofesionaleslis/modelo/pojo/Periodo.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/modelo/pojo/Periodo.java b/src/practicasprofesionaleslis/modelo/pojo/Periodo.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/modelo/pojo/Periodo.java	(date 1748475410327)
+@@ -0,0 +1,50 @@
++package practicasprofesionaleslis.modelo.pojo;
++
++public class Periodo {
++    private int id;
++    private String nombrePeriodo;
++    private String fechaInicio;
++    private String fechaFin;
++
++    public Periodo() {
++    }
++
++    public Periodo(int id, String nombrePeriodo, String fechaInicio, String fechaFin) {
++        this.id = id;
++        this.nombrePeriodo = nombrePeriodo;
++        this.fechaInicio = fechaInicio;
++        this.fechaFin = fechaFin;
++    }
++
++    public int getId() {
++        return id;
++    }
++
++    public void setId(int id) {
++        this.id = id;
++    }
++
++    public String getNombrePeriodo() {
++        return nombrePeriodo;
++    }
++
++    public void setNombrePeriodo(String nombrePeriodo) {
++        this.nombrePeriodo = nombrePeriodo;
++    }
++
++    public String getFechaInicio() {
++        return fechaInicio;
++    }
++
++    public void setFechaInicio(String fechaInicio) {
++        this.fechaInicio = fechaInicio;
++    }
++
++    public String getFechaFin() {
++        return fechaFin;
++    }
++
++    public void setFechaFin(String fechaFin) {
++        this.fechaFin = fechaFin;
++    }
++}
+Index: src/practicasprofesionaleslis/vista/FXMLPrincipalProfesorEE.fxml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/vista/FXMLPrincipalProfesorEE.fxml b/src/practicasprofesionaleslis/vista/FXMLPrincipalProfesorEE.fxml
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/vista/FXMLPrincipalProfesorEE.fxml	(date 1748475410327)
+@@ -0,0 +1,53 @@
++<?xml version="1.0" encoding="UTF-8"?>
++
++<?import javafx.scene.image.*?>
++<?import javafx.scene.shape.*?>
++<?import javafx.scene.text.*?>
++<?import java.lang.*?>
++<?import java.util.*?>
++<?import javafx.scene.*?>
++<?import javafx.scene.control.*?>
++<?import javafx.scene.layout.*?>
++
++
++<AnchorPane id="AnchorPane" prefHeight="650.0" prefWidth="1280.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="practicasprofesionaleslis.controlador.FXMLPrincipalProfesorEEController">
++   <children>
++      <Separator layoutX="35.0" layoutY="255.0" prefHeight="7.0" prefWidth="1210.0" style="-fx-border-color: 000000;" />
++      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#18529d" height="62.0" stroke="#18529d" strokeType="INSIDE" width="1280.0" />
++      <ImageView fx:id="imgFotoPerfil" fitHeight="134.0" fitWidth="143.0" layoutX="35.0" layoutY="95.0" pickOnBounds="true" preserveRatio="true">
++         <image>
++            <Image url="@../recursos/oshawott.jpeg" />
++         </image>
++      </ImageView>
++      <Label layoutX="14.0" layoutY="8.0" prefHeight="46.0" prefWidth="997.0" text="Sistema de Prácticas Profesionales de Ingeniería de Software" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="40.0" />
++         </font>
++      </Label>
++      <Button layoutX="1034.0" layoutY="95.0" mnemonicParsing="false" onAction="#clicBtnCerrarSesion" style="-fx-background-color: #28ad56;" text="Cerrar Sesión" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="30.0" />
++         </font>
++      </Button>
++      <Button layoutX="399.0" layoutY="349.0" mnemonicParsing="false" onAction="#clicBtnConsultarExpedienteEstudiante" style="-fx-background-color: #28ad56;" text="Consultar Expediente del Estudiante" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="30.0" />
++         </font>
++      </Button>
++      <Button layoutX="399.0" layoutY="480.0" mnemonicParsing="false" onAction="#clicBtnValidarEntregaDocumentos" prefHeight="55.0" prefWidth="483.0" style="-fx-background-color: #28ad56;" text="Validar Entrega de Documentos" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="30.0" />
++         </font>
++      </Button>
++      <Label fx:id="lblNombreProfesorEE" layoutX="191.0" layoutY="95.0" prefHeight="33.0" prefWidth="550.0" text="Saúl Domínguez Isidro">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Label>
++      <Label fx:id="lblCorreoElectronico" layoutX="191.0" layoutY="146.0" prefHeight="33.0" prefWidth="550.0" text="sauldominguez@uv.mx">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Label>
++   </children>
++</AnchorPane>
+Index: src/practicasprofesionaleslis/modelo/pojo/Coordinador.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/modelo/pojo/Coordinador.java b/src/practicasprofesionaleslis/modelo/pojo/Coordinador.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/modelo/pojo/Coordinador.java	(date 1748475410327)
+@@ -0,0 +1,87 @@
++package practicasprofesionaleslis.modelo.pojo;
++
++public class Coordinador {
++    private int id;
++    private String numeroPersonal;
++    private String nombre;
++    private String apellidoPaterno;
++    private String apellidoMaterno;
++    private String correoInstitucional;
++    private String contraseña;
++
++    public Coordinador() {
++    }
++
++    public Coordinador(int id, String numeroPersonal, String nombre, String apellidoPaterno, String apellidoMaterno, String correoInstitucional, String contraseña) {
++        this.id = id;
++        this.numeroPersonal = numeroPersonal;
++        this.nombre = nombre;
++        this.apellidoPaterno = apellidoPaterno;
++        this.apellidoMaterno = apellidoMaterno;
++        this.correoInstitucional = correoInstitucional;
++        this.contraseña = contraseña;
++    }
++
++    public int getId() {
++        return id;
++    }
++
++    public void setId(int id) {
++        this.id = id;
++    }
++
++    public String getNumeroPersonal() {
++        return numeroPersonal;
++    }
++
++    public void setNumeroPersonal(String numeroPersonal) {
++        this.numeroPersonal = numeroPersonal;
++    }
++
++    public String getNombre() {
++        return nombre;
++    }
++
++    public void setNombre(String nombre) {
++        this.nombre = nombre;
++    }
++
++    public String getApellidoPaterno() {
++        return apellidoPaterno;
++    }
++
++    public void setApellidoPaterno(String apellidoPaterno) {
++        this.apellidoPaterno = apellidoPaterno;
++    }
++
++    public String getApellidoMaterno() {
++        return apellidoMaterno;
++    }
++
++    public void setApellidoMaterno(String apellidoMaterno) {
++        this.apellidoMaterno = apellidoMaterno;
++    }
++
++    public String getCorreoInstitucional() {
++        return correoInstitucional;
++    }
++
++    public void setCorreoInstitucional(String correoInstitucional) {
++        this.correoInstitucional = correoInstitucional;
++    }
++
++    public String getContraseña() {
++        return contraseña;
++    }
++
++    public void setContraseña(String contraseña) {
++        this.contraseña = contraseña;
++    }
++
++    @Override
++    public String toString() {
++        return String.format("%s %s %s", nombre, apellidoPaterno, apellidoMaterno);
++    }
++    
++    
++}
+Index: dist/PracticasProfesionalesLIS.html
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><html><head>\n  <SCRIPT src=\"http://java.com/js/dtjava.js\"></SCRIPT>\n<script>\n    function launchApplication(jnlpfile) {\n        dtjava.launch(            {\n                url : 'PracticasProfesionalesLIS.jnlp',\n                jnlp_content : 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPGpubHAgc3BlYz0iMS4wIiB4bWxuczpqZng9Imh0dHA6Ly9qYXZhZnguY29tIiBocmVmPSJQcmFjdGljYXNQcm9mZXNpb25hbGVzTElTLmpubHAiPgogIDxpbmZvcm1hdGlvbj4KICAgIDx0aXRsZT5QcmFjdGljYXNQcm9mZXNpb25hbGVzTElTPC90aXRsZT4KICAgIDx2ZW5kb3I+cGVyc288L3ZlbmRvcj4KICAgIDxkZXNjcmlwdGlvbj5udWxsPC9kZXNjcmlwdGlvbj4KICAgIDxvZmZsaW5lLWFsbG93ZWQvPgogIDwvaW5mb3JtYXRpb24+CiAgPHJlc291cmNlcz4KICAgIDxqMnNlIHZlcnNpb249IjEuNisiIGhyZWY9Imh0dHA6Ly9qYXZhLnN1bi5jb20vcHJvZHVjdHMvYXV0b2RsL2oyc2UiLz4KICAgIDxqYXIgaHJlZj0iUHJhY3RpY2FzUHJvZmVzaW9uYWxlc0xJUy5qYXIiIHNpemU9IjE2MDU2NSIgZG93bmxvYWQ9ImVhZ2VyIiAvPgogICAgPGphciBocmVmPSJsaWIvbXlzcWwtY29ubmVjdG9yLWphdmEtOC4wLjIwLmphciIgc2l6ZT0iMjM4NTYwMSIgZG93bmxvYWQ9ImVhZ2VyIiAvPgogIDwvcmVzb3VyY2VzPgogIDxqZng6amF2YWZ4LWRlc2MgIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiBtYWluLWNsYXNzPSJwcmFjdGljYXNwcm9mZXNpb25hbGVzbGlzLlByYWN0aWNhc1Byb2Zlc2lvbmFsZXNMSVMiICBuYW1lPSJQcmFjdGljYXNQcm9mZXNpb25hbGVzTElTIiAvPgogIDx1cGRhdGUgY2hlY2s9ImFsd2F5cyIvPgo8L2pubHA+Cg=='\n            },\n            {\n                javafx : '8.0+'\n            },\n            {}\n        );\n        return false;\n    }\n</script>\n\n<script>\n    function javafxEmbedpracticasprofesionaleslis() {\n        dtjava.embed(\n            {\n                id : 'practicasprofesionaleslis',\n                url : 'PracticasProfesionalesLIS.jnlp',\n                placeholder : 'javafx-app-placeholder',\n                width : '800',\n                height : '600',\n                jnlp_content : 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPGpubHAgc3BlYz0iMS4wIiB4bWxuczpqZng9Imh0dHA6Ly9qYXZhZnguY29tIiBocmVmPSJQcmFjdGljYXNQcm9mZXNpb25hbGVzTElTLmpubHAiPgogIDxpbmZvcm1hdGlvbj4KICAgIDx0aXRsZT5QcmFjdGljYXNQcm9mZXNpb25hbGVzTElTPC90aXRsZT4KICAgIDx2ZW5kb3I+cGVyc288L3ZlbmRvcj4KICAgIDxkZXNjcmlwdGlvbj5udWxsPC9kZXNjcmlwdGlvbj4KICAgIDxvZmZsaW5lLWFsbG93ZWQvPgogIDwvaW5mb3JtYXRpb24+CiAgPHJlc291cmNlcz4KICAgIDxqMnNlIHZlcnNpb249IjEuNisiIGhyZWY9Imh0dHA6Ly9qYXZhLnN1bi5jb20vcHJvZHVjdHMvYXV0b2RsL2oyc2UiLz4KICAgIDxqYXIgaHJlZj0iUHJhY3RpY2FzUHJvZmVzaW9uYWxlc0xJUy5qYXIiIHNpemU9IjE2MDU2NSIgZG93bmxvYWQ9ImVhZ2VyIiAvPgogICAgPGphciBocmVmPSJsaWIvbXlzcWwtY29ubmVjdG9yLWphdmEtOC4wLjIwLmphciIgc2l6ZT0iMjM4NTYwMSIgZG93bmxvYWQ9ImVhZ2VyIiAvPgogIDwvcmVzb3VyY2VzPgogIDxqZng6amF2YWZ4LWRlc2MgIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiBtYWluLWNsYXNzPSJwcmFjdGljYXNwcm9mZXNpb25hbGVzbGlzLlByYWN0aWNhc1Byb2Zlc2lvbmFsZXNMSVMiICBuYW1lPSJQcmFjdGljYXNQcm9mZXNpb25hbGVzTElTIiAvPgogIDx1cGRhdGUgY2hlY2s9ImFsd2F5cyIvPgo8L2pubHA+Cg=='\n            },\n            {\n                javafx : '8.0+'\n            },\n            {}\n        );\n    }\n    <!-- Embed FX application into web page once page is loaded -->\n    dtjava.addOnloadCallback(javafxEmbedpracticasprofesionaleslis);\n</script>\n\n</head><body>\n<h2>Test page for <b>PracticasProfesionalesLIS</b></h2>\n  <b>Webstart:</b> <a href='PracticasProfesionalesLIS.jnlp' onclick=\"return launchApplication('PracticasProfesionalesLIS.jnlp');\">click to launch this app as webstart</a><br><hr><br>\n\n  <!-- Applet will be inserted here -->\n  <div id='javafx-app-placeholder'></div>\n</body></html>\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/dist/PracticasProfesionalesLIS.html b/dist/PracticasProfesionalesLIS.html
+--- a/dist/PracticasProfesionalesLIS.html	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
++++ b/dist/PracticasProfesionalesLIS.html	(date 1748475538058)
+@@ -4,7 +4,7 @@
+     function launchApplication(jnlpfile) {
+         dtjava.launch(            {
+                 url : 'PracticasProfesionalesLIS.jnlp',
+-                jnlp_content : 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPGpubHAgc3BlYz0iMS4wIiB4bWxuczpqZng9Imh0dHA6Ly9qYXZhZnguY29tIiBocmVmPSJQcmFjdGljYXNQcm9mZXNpb25hbGVzTElTLmpubHAiPgogIDxpbmZvcm1hdGlvbj4KICAgIDx0aXRsZT5QcmFjdGljYXNQcm9mZXNpb25hbGVzTElTPC90aXRsZT4KICAgIDx2ZW5kb3I+cGVyc288L3ZlbmRvcj4KICAgIDxkZXNjcmlwdGlvbj5udWxsPC9kZXNjcmlwdGlvbj4KICAgIDxvZmZsaW5lLWFsbG93ZWQvPgogIDwvaW5mb3JtYXRpb24+CiAgPHJlc291cmNlcz4KICAgIDxqMnNlIHZlcnNpb249IjEuNisiIGhyZWY9Imh0dHA6Ly9qYXZhLnN1bi5jb20vcHJvZHVjdHMvYXV0b2RsL2oyc2UiLz4KICAgIDxqYXIgaHJlZj0iUHJhY3RpY2FzUHJvZmVzaW9uYWxlc0xJUy5qYXIiIHNpemU9IjE2MDU2NSIgZG93bmxvYWQ9ImVhZ2VyIiAvPgogICAgPGphciBocmVmPSJsaWIvbXlzcWwtY29ubmVjdG9yLWphdmEtOC4wLjIwLmphciIgc2l6ZT0iMjM4NTYwMSIgZG93bmxvYWQ9ImVhZ2VyIiAvPgogIDwvcmVzb3VyY2VzPgogIDxqZng6amF2YWZ4LWRlc2MgIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiBtYWluLWNsYXNzPSJwcmFjdGljYXNwcm9mZXNpb25hbGVzbGlzLlByYWN0aWNhc1Byb2Zlc2lvbmFsZXNMSVMiICBuYW1lPSJQcmFjdGljYXNQcm9mZXNpb25hbGVzTElTIiAvPgogIDx1cGRhdGUgY2hlY2s9ImFsd2F5cyIvPgo8L2pubHA+Cg=='
++                jnlp_content : 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjxqbmxwIHNwZWM9IjEuMCIgeG1sbnM6amZ4PSJodHRwOi8vamF2YWZ4LmNvbSIgaHJlZj0iUHJhY3RpY2FzUHJvZmVzaW9uYWxlc0xJUy5qbmxwIj4NCiAgPGluZm9ybWF0aW9uPg0KICAgIDx0aXRsZT5QcmFjdGljYXNQcm9mZXNpb25hbGVzTElTPC90aXRsZT4NCiAgICA8dmVuZG9yPnBlcnNvPC92ZW5kb3I+DQogICAgPGRlc2NyaXB0aW9uPm51bGw8L2Rlc2NyaXB0aW9uPg0KICAgIDxvZmZsaW5lLWFsbG93ZWQvPg0KICA8L2luZm9ybWF0aW9uPg0KICA8cmVzb3VyY2VzPg0KICAgIDxqMnNlIHZlcnNpb249IjEuNisiIGhyZWY9Imh0dHA6Ly9qYXZhLnN1bi5jb20vcHJvZHVjdHMvYXV0b2RsL2oyc2UiLz4NCiAgICA8amFyIGhyZWY9IlByYWN0aWNhc1Byb2Zlc2lvbmFsZXNMSVMuamFyIiBzaXplPSIxODQxODciIGRvd25sb2FkPSJlYWdlciIgLz4NCiAgICA8amFyIGhyZWY9ImxpYlxteXNxbC1jb25uZWN0b3ItamF2YS04LjAuMjAuamFyIiBzaXplPSIyMzg1NjAxIiBkb3dubG9hZD0iZWFnZXIiIC8+DQogIDwvcmVzb3VyY2VzPg0KICA8amZ4OmphdmFmeC1kZXNjICB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgbWFpbi1jbGFzcz0icHJhY3RpY2FzcHJvZmVzaW9uYWxlc2xpcy5QcmFjdGljYXNQcm9mZXNpb25hbGVzTElTIiAgbmFtZT0iUHJhY3RpY2FzUHJvZmVzaW9uYWxlc0xJUyIgLz4NCiAgPHVwZGF0ZSBjaGVjaz0iYWx3YXlzIi8+DQo8L2pubHA+DQo='
+             },
+             {
+                 javafx : '8.0+'
+@@ -24,7 +24,7 @@
+                 placeholder : 'javafx-app-placeholder',
+                 width : '800',
+                 height : '600',
+-                jnlp_content : 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPGpubHAgc3BlYz0iMS4wIiB4bWxuczpqZng9Imh0dHA6Ly9qYXZhZnguY29tIiBocmVmPSJQcmFjdGljYXNQcm9mZXNpb25hbGVzTElTLmpubHAiPgogIDxpbmZvcm1hdGlvbj4KICAgIDx0aXRsZT5QcmFjdGljYXNQcm9mZXNpb25hbGVzTElTPC90aXRsZT4KICAgIDx2ZW5kb3I+cGVyc288L3ZlbmRvcj4KICAgIDxkZXNjcmlwdGlvbj5udWxsPC9kZXNjcmlwdGlvbj4KICAgIDxvZmZsaW5lLWFsbG93ZWQvPgogIDwvaW5mb3JtYXRpb24+CiAgPHJlc291cmNlcz4KICAgIDxqMnNlIHZlcnNpb249IjEuNisiIGhyZWY9Imh0dHA6Ly9qYXZhLnN1bi5jb20vcHJvZHVjdHMvYXV0b2RsL2oyc2UiLz4KICAgIDxqYXIgaHJlZj0iUHJhY3RpY2FzUHJvZmVzaW9uYWxlc0xJUy5qYXIiIHNpemU9IjE2MDU2NSIgZG93bmxvYWQ9ImVhZ2VyIiAvPgogICAgPGphciBocmVmPSJsaWIvbXlzcWwtY29ubmVjdG9yLWphdmEtOC4wLjIwLmphciIgc2l6ZT0iMjM4NTYwMSIgZG93bmxvYWQ9ImVhZ2VyIiAvPgogIDwvcmVzb3VyY2VzPgogIDxqZng6amF2YWZ4LWRlc2MgIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiBtYWluLWNsYXNzPSJwcmFjdGljYXNwcm9mZXNpb25hbGVzbGlzLlByYWN0aWNhc1Byb2Zlc2lvbmFsZXNMSVMiICBuYW1lPSJQcmFjdGljYXNQcm9mZXNpb25hbGVzTElTIiAvPgogIDx1cGRhdGUgY2hlY2s9ImFsd2F5cyIvPgo8L2pubHA+Cg=='
++                jnlp_content : 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjxqbmxwIHNwZWM9IjEuMCIgeG1sbnM6amZ4PSJodHRwOi8vamF2YWZ4LmNvbSIgaHJlZj0iUHJhY3RpY2FzUHJvZmVzaW9uYWxlc0xJUy5qbmxwIj4NCiAgPGluZm9ybWF0aW9uPg0KICAgIDx0aXRsZT5QcmFjdGljYXNQcm9mZXNpb25hbGVzTElTPC90aXRsZT4NCiAgICA8dmVuZG9yPnBlcnNvPC92ZW5kb3I+DQogICAgPGRlc2NyaXB0aW9uPm51bGw8L2Rlc2NyaXB0aW9uPg0KICAgIDxvZmZsaW5lLWFsbG93ZWQvPg0KICA8L2luZm9ybWF0aW9uPg0KICA8cmVzb3VyY2VzPg0KICAgIDxqMnNlIHZlcnNpb249IjEuNisiIGhyZWY9Imh0dHA6Ly9qYXZhLnN1bi5jb20vcHJvZHVjdHMvYXV0b2RsL2oyc2UiLz4NCiAgICA8amFyIGhyZWY9IlByYWN0aWNhc1Byb2Zlc2lvbmFsZXNMSVMuamFyIiBzaXplPSIxODQxODciIGRvd25sb2FkPSJlYWdlciIgLz4NCiAgICA8amFyIGhyZWY9ImxpYlxteXNxbC1jb25uZWN0b3ItamF2YS04LjAuMjAuamFyIiBzaXplPSIyMzg1NjAxIiBkb3dubG9hZD0iZWFnZXIiIC8+DQogIDwvcmVzb3VyY2VzPg0KICA8amZ4OmphdmFmeC1kZXNjICB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgbWFpbi1jbGFzcz0icHJhY3RpY2FzcHJvZmVzaW9uYWxlc2xpcy5QcmFjdGljYXNQcm9mZXNpb25hbGVzTElTIiAgbmFtZT0iUHJhY3RpY2FzUHJvZmVzaW9uYWxlc0xJUyIgLz4NCiAgPHVwZGF0ZSBjaGVjaz0iYWx3YXlzIi8+DQo8L2pubHA+DQo='
+             },
+             {
+                 javafx : '8.0+'
+Index: src/practicasprofesionaleslis/vista/FXMLPrincipalCoordinador.fxml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/vista/FXMLPrincipalCoordinador.fxml b/src/practicasprofesionaleslis/vista/FXMLPrincipalCoordinador.fxml
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/vista/FXMLPrincipalCoordinador.fxml	(date 1748475410327)
+@@ -0,0 +1,81 @@
++<?xml version="1.0" encoding="UTF-8"?>
++
++<?import javafx.scene.image.*?>
++<?import javafx.scene.shape.*?>
++<?import javafx.scene.text.*?>
++<?import java.lang.*?>
++<?import java.util.*?>
++<?import javafx.scene.*?>
++<?import javafx.scene.control.*?>
++<?import javafx.scene.layout.*?>
++
++<AnchorPane id="AnchorPane" prefHeight="650.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="practicasprofesionaleslis.controlador.FXMLPrincipalCoordinadorController">
++   <children>
++      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#18529d" height="62.0" stroke="#18529d" strokeType="INSIDE" width="1280.0" />
++      <Label layoutX="14.0" layoutY="10.0" prefHeight="46.0" prefWidth="981.0" text="Sistema de Prácticas Profesionales de Ingeniería de Software" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="40.0" />
++         </font>
++      </Label>
++      <ImageView fx:id="imgFotoPerfil" fitHeight="134.0" fitWidth="143.0" layoutX="29.0" layoutY="90.0" pickOnBounds="true" preserveRatio="true">
++         <image>
++            <Image url="@../recursos/oshawott.jpeg" />
++         </image>
++      </ImageView>
++      <Label fx:id="lblNombreCoordinador" layoutX="191.0" layoutY="90.0" prefHeight="33.0" prefWidth="450.0" text="Ángel Juan Sánchez García">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Label>
++      <Button layoutX="1039.0" layoutY="90.0" mnemonicParsing="false" onAction="#clicBtnCerrarSesion" style="-fx-background-color: #28ad56;" text="Cerrar Sesión" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="30.0" />
++         </font>
++      </Button>
++      <Button layoutX="803.0" layoutY="299.0" mnemonicParsing="false" onAction="#clicBtnRegistrarResponsableProyecto" prefHeight="53.0" prefWidth="447.0" style="-fx-background-color: #28ad56;" text="Registrar Responsable de Proyecto" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Button>
++      <Button layoutX="30.0" layoutY="298.0" mnemonicParsing="false" onAction="#clicBtnRegistrarOrganizacionVinculada" prefHeight="55.0" prefWidth="459.0" style="-fx-background-color: #28ad56;" text="Registrar Organización Vinculada" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Button>
++      <Button layoutX="33.0" layoutY="551.0" mnemonicParsing="false" onAction="#clicBtnGenerarDoctosAsignacion" style="-fx-background-color: #28ad56;" text="Generar Documentos de Asignación" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font></Button>
++      <Separator layoutX="30.0" layoutY="251.0" prefHeight="0.0" prefWidth="1220.0" />
++      <Button layoutX="514.0" layoutY="299.0" mnemonicParsing="false" onAction="#clicBtnRegistrarProyecto" prefHeight="53.0" prefWidth="263.0" style="-fx-background-color: #28ad56;" text="Registrar Proyecto" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Button>
++      <Button layoutX="514.0" layoutY="424.0" mnemonicParsing="false" onAction="#clicBtnActualizarProyecto" style="-fx-background-color: #28ad56;" text="Actualizar Proyecto" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font></Button>
++      <Button layoutX="514.0" layoutY="551.0" mnemonicParsing="false" onAction="#clicBtnAsignarProyecto" prefHeight="53.0" prefWidth="263.0" style="-fx-background-color: #28ad56;" text="Asignar Proyecto" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font></Button>
++      <Button layoutX="30.0" layoutY="423.0" mnemonicParsing="false" onAction="#clicBtnActualizarOrganizacionVinculada" prefHeight="55.0" prefWidth="459.0" style="-fx-background-color: #28ad56;" text="Actualizar Organización Vinculada" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font></Button>
++      <Button layoutX="803.0" layoutY="424.0" mnemonicParsing="false" onAction="#clicBtnActualizarResponsableProyecto" style="-fx-background-color: #28ad56;" text="Actualizar Responsable de Proyecto" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font></Button>
++      <Button layoutX="803.0" layoutY="551.0" mnemonicParsing="false" onAction="#clicBtnProgramarEntregasPracticas" prefHeight="53.0" prefWidth="447.0" style="-fx-background-color: #28ad56;" text="Programar Entregas de Prácticas" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font></Button>
++      <Label fx:id="lblCorreoInstitucional" layoutX="191.0" layoutY="141.0" text="asanchez@uv.mx">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Label>
++   </children>
++</AnchorPane>
+Index: dist/PracticasProfesionalesLIS.jnlp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\n<jnlp spec=\"1.0\" xmlns:jfx=\"http://javafx.com\" href=\"PracticasProfesionalesLIS.jnlp\">\n  <information>\n    <title>PracticasProfesionalesLIS</title>\n    <vendor>perso</vendor>\n    <description>null</description>\n    <offline-allowed/>\n  </information>\n  <resources>\n    <j2se version=\"1.6+\" href=\"http://java.sun.com/products/autodl/j2se\"/>\n    <jar href=\"PracticasProfesionalesLIS.jar\" size=\"160565\" download=\"eager\" />\n    <jar href=\"lib/mysql-connector-java-8.0.20.jar\" size=\"2385601\" download=\"eager\" />\n  </resources>\n  <jfx:javafx-desc  width=\"800\" height=\"600\" main-class=\"practicasprofesionaleslis.PracticasProfesionalesLIS\"  name=\"PracticasProfesionalesLIS\" />\n  <update check=\"always\"/>\n</jnlp>\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/dist/PracticasProfesionalesLIS.jnlp b/dist/PracticasProfesionalesLIS.jnlp
+--- a/dist/PracticasProfesionalesLIS.jnlp	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
++++ b/dist/PracticasProfesionalesLIS.jnlp	(date 1748475563614)
+@@ -8,8 +8,8 @@
+   </information>
+   <resources>
+     <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
+-    <jar href="PracticasProfesionalesLIS.jar" size="160565" download="eager" />
+-    <jar href="lib/mysql-connector-java-8.0.20.jar" size="2385601" download="eager" />
++    <jar href="PracticasProfesionalesLIS.jar" size="184187" download="eager" />
++    <jar href="lib\mysql-connector-java-8.0.20.jar" size="2385601" download="eager" />
+   </resources>
+   <jfx:javafx-desc  width="800" height="600" main-class="practicasprofesionaleslis.PracticasProfesionalesLIS"  name="PracticasProfesionalesLIS" />
+   <update check="always"/>
+Index: src/practicasprofesionaleslis/vista/FXMLPrincipalEvaluador.fxml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/vista/FXMLPrincipalEvaluador.fxml b/src/practicasprofesionaleslis/vista/FXMLPrincipalEvaluador.fxml
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/vista/FXMLPrincipalEvaluador.fxml	(date 1748475410327)
+@@ -0,0 +1,48 @@
++<?xml version="1.0" encoding="UTF-8"?>
++
++<?import javafx.scene.image.*?>
++<?import javafx.scene.text.*?>
++<?import javafx.scene.shape.*?>
++<?import java.lang.*?>
++<?import java.util.*?>
++<?import javafx.scene.*?>
++<?import javafx.scene.control.*?>
++<?import javafx.scene.layout.*?>
++
++
++<AnchorPane id="AnchorPane" prefHeight="650.0" prefWidth="1280.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="practicasprofesionaleslis.controlador.FXMLPrincipalEvaluadorController">
++   <children>
++      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#18529d" height="62.0" stroke="#18529d" strokeType="INSIDE" width="1280.0" />
++      <Label fx:id="lblCorreoInstitucional" layoutX="190.0" layoutY="140.0" text="lizhernandez@uv.mx">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Label>
++      <Label fx:id="lblNombreEvaluador" layoutX="190.0" layoutY="89.0" prefHeight="33.0" prefWidth="450.0" text="Lizbeth Alejandra Hernández González">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Label>
++      <ImageView fx:id="imgFotoPerfil" fitHeight="134.0" fitWidth="143.0" layoutX="28.0" layoutY="89.0" pickOnBounds="true" preserveRatio="true">
++         <image>
++            <Image url="@../recursos/oshawott.jpeg" />
++         </image>
++      </ImageView>
++      <Label layoutX="13.0" layoutY="9.0" prefHeight="46.0" prefWidth="981.0" text="Sistema de Prácticas Profesionales de Ingeniería de Software" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="40.0" />
++         </font>
++      </Label>
++      <Separator layoutX="30.0" layoutY="246.0" prefHeight="0.0" prefWidth="1220.0" />
++      <Button layoutX="1039.0" layoutY="89.0" mnemonicParsing="false" onAction="#clicBtnCerrarSesion" style="-fx-background-color: #28ad56;" text="Cerrar Sesión" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="30.0" />
++         </font>
++      </Button>
++      <Button layoutX="369.0" layoutY="402.0" mnemonicParsing="false" onAction="#clicBtnEvaluarPresentacionEstudiante" style="-fx-background-color: #28ad56;" text="Evaluar Presentación de Estudiante" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="35.0" />
++         </font>
++      </Button>
++   </children>
++</AnchorPane>
+Index: src/practicasprofesionaleslis/controlador/FXMLPrincipalCoordinadorController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/controlador/FXMLPrincipalCoordinadorController.java b/src/practicasprofesionaleslis/controlador/FXMLPrincipalCoordinadorController.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/controlador/FXMLPrincipalCoordinadorController.java	(date 1748475410327)
+@@ -0,0 +1,83 @@
++package practicasprofesionaleslis.controlador;
++
++import java.net.URL;
++import java.util.ResourceBundle;
++import javafx.event.ActionEvent;
++import javafx.fxml.FXML;
++import javafx.fxml.Initializable;
++import javafx.scene.control.Alert;
++import javafx.scene.control.ButtonType;
++import javafx.scene.control.Label;
++import javafx.scene.image.ImageView;
++import practicasprofesionaleslis.modelo.pojo.Coordinador;
++import practicasprofesionaleslis.utilidades.UtilidadesVentanas;
++
++public class FXMLPrincipalCoordinadorController implements Initializable {
++    private Coordinador coordinador;
++
++    @FXML
++    private ImageView imgFotoPerfil;
++    @FXML
++    private Label lblNombreCoordinador;
++    @FXML
++    private Label lblCorreoInstitucional;
++
++    @Override
++    public void initialize(URL url, ResourceBundle rb) {}
++
++    public void inicializarDatosCoordinador(Coordinador coordinador) {
++        this.coordinador = coordinador;
++        if (coordinador != null) {
++            lblNombreCoordinador.setText(coordinador.toString());
++            lblCorreoInstitucional.setText(coordinador.getCorreoInstitucional());
++        }
++    }
++
++    @FXML
++    private void clicBtnCerrarSesion(ActionEvent event) {
++        Alert.AlertType tipo = Alert.AlertType.CONFIRMATION;
++        String titulo = "CERRAR SESIÓN";
++        String contenido = "¿Estás seguro que deseas cerrar sesión?";
++
++        if (UtilidadesVentanas.mostrarAlertaSimple(tipo, titulo, contenido).get() == ButtonType.OK) {
++            UtilidadesVentanas.irInicioSesion(lblNombreCoordinador);
++        }
++    }
++
++    @FXML
++    private void clicBtnRegistrarResponsableProyecto(ActionEvent event) {
++    }
++
++    @FXML
++    private void clicBtnRegistrarOrganizacionVinculada(ActionEvent event) {
++    }
++
++    @FXML
++    private void clicBtnGenerarDoctosAsignacion(ActionEvent event) {
++    }
++
++    @FXML
++    private void clicBtnRegistrarProyecto(ActionEvent event) {
++    }
++
++    @FXML
++    private void clicBtnActualizarProyecto(ActionEvent event) {
++    }
++
++    @FXML
++    private void clicBtnAsignarProyecto(ActionEvent event) {
++    }
++
++    @FXML
++    private void clicBtnActualizarOrganizacionVinculada(ActionEvent event) {
++    }
++
++    @FXML
++    private void clicBtnActualizarResponsableProyecto(ActionEvent event) {
++    }
++
++    @FXML
++    private void clicBtnProgramarEntregasPracticas(ActionEvent event) {
++    }
++    
++}
+Index: src/practicasprofesionaleslis/controlador/FXMLPrincipalEvaluadorController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/controlador/FXMLPrincipalEvaluadorController.java b/src/practicasprofesionaleslis/controlador/FXMLPrincipalEvaluadorController.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/controlador/FXMLPrincipalEvaluadorController.java	(date 1748475410327)
+@@ -0,0 +1,50 @@
++package practicasprofesionaleslis.controlador;
++
++import java.net.URL;
++import java.util.ResourceBundle;
++import javafx.event.ActionEvent;
++import javafx.fxml.FXML;
++import javafx.fxml.Initializable;
++import javafx.scene.control.Alert;
++import javafx.scene.control.ButtonType;
++import javafx.scene.control.Label;
++import javafx.scene.image.ImageView;
++import practicasprofesionaleslis.modelo.pojo.Evaluador;
++import practicasprofesionaleslis.utilidades.UtilidadesVentanas;
++
++public class FXMLPrincipalEvaluadorController implements Initializable {
++    private Evaluador evaluador;
++
++    @FXML
++    private Label lblCorreoInstitucional;
++    @FXML
++    private Label lblNombreEvaluador;
++    @FXML
++    private ImageView imgFotoPerfil;
++
++    @Override
++    public void initialize(URL url, ResourceBundle rb) {} 
++    
++    public void inicializarDatosEvaluador(Evaluador evaluador) {
++        this.evaluador = evaluador;
++        if (evaluador != null) {
++            lblNombreEvaluador.setText(evaluador.toString());
++            lblCorreoInstitucional.setText(evaluador.getCorreoInstitucional());
++        }
++    }
++
++    @FXML
++    private void clicBtnCerrarSesion(ActionEvent event) {
++        Alert.AlertType tipo = Alert.AlertType.CONFIRMATION;
++        String titulo = "CERRAR SESIÓN";
++        String contenido = "¿Estás seguro que deseas cerrar sesión?";
++
++        if (UtilidadesVentanas.mostrarAlertaSimple(tipo, titulo, contenido).get() == ButtonType.OK) {
++            UtilidadesVentanas.irInicioSesion(lblNombreEvaluador);
++        }
++    }
++
++    @FXML
++    private void clicBtnEvaluarPresentacionEstudiante(ActionEvent event) {
++    }
++}
+Index: src/practicasprofesionaleslis/modelo/dao/ExpedienteDAO.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/modelo/dao/ExpedienteDAO.java b/src/practicasprofesionaleslis/modelo/dao/ExpedienteDAO.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/modelo/dao/ExpedienteDAO.java	(date 1748475410327)
+@@ -0,0 +1,35 @@
++package practicasprofesionaleslis.modelo.dao;
++
++import java.sql.Connection;
++import java.sql.PreparedStatement;
++import java.sql.ResultSet;
++import java.sql.SQLException;
++import practicasprofesionaleslis.modelo.ConexionBD;
++import practicasprofesionaleslis.modelo.pojo.Proyecto;
++
++public class ExpedienteDAO {
++    
++    public static String obtenerNombreProyectoPorMatricula(String matricula) throws SQLException {
++        String nombreProyecto = "";
++        Connection conexionBD = ConexionBD.abrirConexion();
++        
++        if (conexionBD != null) {
++            String consulta = "SELECT p.nombre "
++                    + "FROM proyecto p "
++                    + "JOIN expediente e ON p.id = e.idProyecto "
++                    + "JOIN estudiante est ON e.idEstudiante = est.id "
++                    + "WHERE est.matricula = ?;";
++            PreparedStatement sentencia = conexionBD.prepareStatement(consulta);
++            sentencia.setString(1, matricula);
++            
++            ResultSet resultado = sentencia.executeQuery();
++            if (resultado.next()) {
++                nombreProyecto = resultado.getString("nombre");
++            }
++        } else {
++            throw new SQLException("Su solicitud no puede ser procesada en este momento. Intente más tarde.");
++        }
++        
++        return nombreProyecto;
++    }
++}
+Index: src/practicasprofesionaleslis/controlador/FXMLPrincipalProfesorEEController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/controlador/FXMLPrincipalProfesorEEController.java b/src/practicasprofesionaleslis/controlador/FXMLPrincipalProfesorEEController.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/controlador/FXMLPrincipalProfesorEEController.java	(date 1748475410327)
+@@ -0,0 +1,56 @@
++package practicasprofesionaleslis.controlador;
++
++import java.net.URL;
++import java.util.ResourceBundle;
++import javafx.event.ActionEvent;
++import javafx.fxml.FXML;
++import javafx.fxml.Initializable;
++import javafx.scene.control.Alert;
++import javafx.scene.control.ButtonType;
++import javafx.scene.control.Label;
++import javafx.scene.image.ImageView;
++import practicasprofesionaleslis.modelo.pojo.ProfesorEE;
++import practicasprofesionaleslis.utilidades.UtilidadesVentanas;
++
++public class FXMLPrincipalProfesorEEController implements Initializable {
++    private ProfesorEE profesorEE;
++
++    @FXML
++    private ImageView imgFotoPerfil;
++    @FXML
++    private Label lblNombreProfesorEE;
++    @FXML
++    private Label lblCorreoElectronico;
++
++    @Override
++    public void initialize(URL url, ResourceBundle rb) {
++    }
++
++    public void inicializarDatosProfesorEE(ProfesorEE profesorEE) {
++        this.profesorEE = profesorEE;
++        if (profesorEE != null) {
++            lblNombreProfesorEE.setText(profesorEE.toString());
++            lblCorreoElectronico.setText(profesorEE.getCorreoInstitucional());
++        }
++    }
++
++    @FXML
++    private void clicBtnCerrarSesion(ActionEvent event) {
++        Alert.AlertType tipo = Alert.AlertType.CONFIRMATION;
++        String titulo = "CERRAR SESIÓN";
++        String contenido = "¿Estás seguro que deseas cerrar sesión?";
++
++        if (UtilidadesVentanas.mostrarAlertaSimple(tipo, titulo, contenido).get() == ButtonType.OK) {
++            UtilidadesVentanas.irInicioSesion(lblNombreProfesorEE);
++        }
++    }
++
++    @FXML
++    private void clicBtnConsultarExpedienteEstudiante(ActionEvent event) {
++    }
++
++    @FXML
++    private void clicBtnValidarEntregaDocumentos(ActionEvent event) {
++    }
++    
++}
+Index: build/classes/practicasprofesionaleslis/vista/FXMLPrincipalEstudiante.fxml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n<?import javafx.scene.paint.*?>\n<?import javafx.scene.shape.*?>\n<?import javafx.scene.text.*?>\n<?import javafx.scene.image.*?>\n<?import java.lang.*?>\n<?import java.util.*?>\n<?import javafx.scene.*?>\n<?import javafx.scene.control.*?>\n<?import javafx.scene.layout.*?>\n\n<AnchorPane id=\"AnchorPane\" prefHeight=\"650.0\" prefWidth=\"1280.0\" xmlns=\"http://javafx.com/javafx/8\" xmlns:fx=\"http://javafx.com/fxml/1\" fx:controller=\"practicasprofesionaleslis.controlador.FXMLPrincipalEstudianteController\">\n   <children>\n      <ImageView fitHeight=\"134.0\" fitWidth=\"143.0\" layoutX=\"34.0\" layoutY=\"93.0\" pickOnBounds=\"true\" preserveRatio=\"true\">\n         <image>\n            <Image url=\"@../recursos/oshawott.jpeg\" />\n         </image>\n      </ImageView>\n      <Label fx:id=\"lbNombreEstudiante\" layoutX=\"191.0\" layoutY=\"93.0\" prefHeight=\"29.0\" prefWidth=\"429.0\" text=\"Mauricio Noriega Delgado\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"24.0\" />\n         </font>\n      </Label>\n      <Label layoutX=\"191.0\" layoutY=\"135.0\" prefHeight=\"2.0\" prefWidth=\"138.0\" text=\"S23014046\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"24.0\" />\n         </font>\n      </Label>\n      <Label layoutX=\"191.0\" layoutY=\"174.0\" prefHeight=\"0.0\" prefWidth=\"679.0\" text=\"Implementación de un Chatbot para FedEx\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"24.0\" />\n         </font>\n      </Label>\n      <Rectangle arcHeight=\"5.0\" arcWidth=\"5.0\" fill=\"#18529d\" height=\"62.0\" stroke=\"BLACK\" strokeType=\"INSIDE\" width=\"1280.0\" />\n      <Label layoutX=\"17.0\" layoutY=\"8.0\" prefHeight=\"46.0\" prefWidth=\"997.0\" text=\"Sistema de Prácticas Profesionales de Ingeniería de Software\" textFill=\"WHITE\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"40.0\" />\n         </font>\n      </Label>\n      <Button layoutX=\"1031.0\" layoutY=\"95.0\" mnemonicParsing=\"false\" onAction=\"#btnCerrarSesion\" prefHeight=\"38.0\" prefWidth=\"216.0\" style=\"-fx-background-color: #28ad56;\" text=\"Cerrar Sesión\" textFill=\"WHITE\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"30.0\" />\n         </font>\n      </Button>\n      <Button layoutX=\"94.0\" layoutY=\"345.0\" mnemonicParsing=\"false\" prefHeight=\"74.0\" prefWidth=\"410.0\" style=\"-fx-background-color: #28ad56;\" text=\"Consultar Avance\" textFill=\"WHITE\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"40.0\" />\n         </font>\n      </Button>\n      <Button layoutX=\"94.0\" layoutY=\"488.0\" mnemonicParsing=\"false\" prefHeight=\"74.0\" prefWidth=\"410.0\" style=\"-fx-background-color: #28ad56;\" text=\"Actualizar Expediente\" textFill=\"WHITE\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"40.0\" />\n         </font>\n      </Button>\n      <Button layoutX=\"604.0\" layoutY=\"488.0\" mnemonicParsing=\"false\" prefHeight=\"74.0\" prefWidth=\"573.0\" style=\"-fx-background-color: #28ad56;\" text=\"Evaluar Organización Vinculada\" textFill=\"WHITE\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"40.0\" />\n         </font>\n      </Button>\n      <Button layoutX=\"604.0\" layoutY=\"345.0\" mnemonicParsing=\"false\" style=\"-fx-background-color: #28ad56;\" text=\"Generar Formato de Evaluación\" textFill=\"WHITE\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"40.0\" />\n         </font>\n      </Button>\n   </children>\n</AnchorPane>\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build/classes/practicasprofesionaleslis/vista/FXMLPrincipalEstudiante.fxml b/build/classes/practicasprofesionaleslis/vista/FXMLPrincipalEstudiante.fxml
+--- a/build/classes/practicasprofesionaleslis/vista/FXMLPrincipalEstudiante.fxml	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
++++ b/build/classes/practicasprofesionaleslis/vista/FXMLPrincipalEstudiante.fxml	(date 1748475410327)
+@@ -12,56 +12,57 @@
+ 
+ <AnchorPane id="AnchorPane" prefHeight="650.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="practicasprofesionaleslis.controlador.FXMLPrincipalEstudianteController">
+    <children>
+-      <ImageView fitHeight="134.0" fitWidth="143.0" layoutX="34.0" layoutY="93.0" pickOnBounds="true" preserveRatio="true">
++      <ImageView fx:id="imgFotoPerfil" fitHeight="134.0" fitWidth="143.0" layoutX="34.0" layoutY="93.0" pickOnBounds="true" preserveRatio="true">
+          <image>
+             <Image url="@../recursos/oshawott.jpeg" />
+          </image>
+       </ImageView>
+-      <Label fx:id="lbNombreEstudiante" layoutX="191.0" layoutY="93.0" prefHeight="29.0" prefWidth="429.0" text="Mauricio Noriega Delgado">
++      <Label fx:id="lblNombreEstudiante" layoutX="191.0" layoutY="93.0" prefHeight="29.0" prefWidth="429.0">
+          <font>
+             <Font name="Gill Sans MT" size="24.0" />
+          </font>
+       </Label>
+-      <Label layoutX="191.0" layoutY="135.0" prefHeight="2.0" prefWidth="138.0" text="S23014046">
++      <Label fx:id="lblMatricula" layoutX="191.0" layoutY="135.0" prefHeight="2.0" prefWidth="138.0">
+          <font>
+             <Font name="Gill Sans MT" size="24.0" />
+          </font>
+       </Label>
+-      <Label layoutX="191.0" layoutY="174.0" prefHeight="0.0" prefWidth="679.0" text="Implementación de un Chatbot para FedEx">
++      <Label fx:id="lblProyecto" layoutX="191.0" layoutY="174.0" prefHeight="0.0" prefWidth="679.0">
+          <font>
+             <Font name="Gill Sans MT" size="24.0" />
+          </font>
+       </Label>
+-      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#18529d" height="62.0" stroke="BLACK" strokeType="INSIDE" width="1280.0" />
++      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#18529d" height="62.0" stroke="#18529d" strokeType="INSIDE" width="1280.0" />
+       <Label layoutX="17.0" layoutY="8.0" prefHeight="46.0" prefWidth="997.0" text="Sistema de Prácticas Profesionales de Ingeniería de Software" textFill="WHITE">
+          <font>
+             <Font name="Gill Sans MT" size="40.0" />
+          </font>
+       </Label>
+-      <Button layoutX="1031.0" layoutY="95.0" mnemonicParsing="false" onAction="#btnCerrarSesion" prefHeight="38.0" prefWidth="216.0" style="-fx-background-color: #28ad56;" text="Cerrar Sesión" textFill="WHITE">
++      <Button layoutX="1031.0" layoutY="95.0" mnemonicParsing="false" onAction="#clicBtnCerrarSesion" prefHeight="38.0" prefWidth="216.0" style="-fx-background-color: #28ad56;" text="Cerrar Sesión" textFill="WHITE">
+          <font>
+             <Font name="Gill Sans MT" size="30.0" />
+          </font>
+       </Button>
+-      <Button layoutX="94.0" layoutY="345.0" mnemonicParsing="false" prefHeight="74.0" prefWidth="410.0" style="-fx-background-color: #28ad56;" text="Consultar Avance" textFill="WHITE">
++      <Button layoutX="172.0" layoutY="345.0" mnemonicParsing="false" onAction="#clicBtnConsultarAvance" prefHeight="29.0" prefWidth="329.0" style="-fx-background-color: #28ad56;" text="Consultar Avance" textFill="WHITE">
+          <font>
+-            <Font name="Gill Sans MT" size="40.0" />
++            <Font name="Gill Sans MT" size="30.0" />
+          </font>
+       </Button>
+-      <Button layoutX="94.0" layoutY="488.0" mnemonicParsing="false" prefHeight="74.0" prefWidth="410.0" style="-fx-background-color: #28ad56;" text="Actualizar Expediente" textFill="WHITE">
++      <Button layoutX="172.0" layoutY="488.0" mnemonicParsing="false" onAction="#clicBtnActualizarExpediente" prefHeight="46.0" prefWidth="329.0" style="-fx-background-color: #28ad56;" text="Actualizar Expediente" textFill="WHITE">
+          <font>
+-            <Font name="Gill Sans MT" size="40.0" />
++            <Font name="Gill Sans MT" size="30.0" />
+          </font>
+       </Button>
+-      <Button layoutX="604.0" layoutY="488.0" mnemonicParsing="false" prefHeight="74.0" prefWidth="573.0" style="-fx-background-color: #28ad56;" text="Evaluar Organización Vinculada" textFill="WHITE">
++      <Button layoutX="670.0" layoutY="488.0" mnemonicParsing="false" onAction="#clicBtnEvaluarOrganizacionVinculada" prefHeight="55.0" prefWidth="429.0" style="-fx-background-color: #28ad56;" text="Evaluar Organización Vinculada" textFill="WHITE">
+          <font>
+-            <Font name="Gill Sans MT" size="40.0" />
++            <Font name="Gill Sans MT" size="30.0" />
+          </font>
+       </Button>
+-      <Button layoutX="604.0" layoutY="345.0" mnemonicParsing="false" style="-fx-background-color: #28ad56;" text="Generar Formato de Evaluación" textFill="WHITE">
++      <Button layoutX="670.0" layoutY="345.0" mnemonicParsing="false" onAction="#clicBtnGenerarFormatoEvaluacion" style="-fx-background-color: #28ad56;" text="Generar Formato de Evaluación" textFill="WHITE">
+          <font>
+-            <Font name="Gill Sans MT" size="40.0" />
++            <Font name="Gill Sans MT" size="30.0" />
+          </font>
+       </Button>
++      <Separator layoutX="35.0" layoutY="258.0" prefHeight="7.0" prefWidth="1210.0" style="-fx-border-color: 000000;" />
+    </children>
+ </AnchorPane>
+Index: build/classes/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n<?import javafx.scene.shape.*?>\n<?import javafx.scene.text.*?>\n<?import javafx.scene.image.*?>\n<?import java.lang.*?>\n<?import java.util.*?>\n<?import javafx.scene.*?>\n<?import javafx.scene.control.*?>\n<?import javafx.scene.layout.*?>\n\n<AnchorPane prefHeight=\"500.0\" prefWidth=\"800.0\" xmlns=\"http://javafx.com/javafx/8\" xmlns:fx=\"http://javafx.com/fxml/1\" fx:controller=\"practicasprofesionaleslis.controlador.FXMLInicioSesionController\">\n   <children>\n      <AnchorPane prefHeight=\"500.0\" prefWidth=\"300.0\" style=\"-fx-background-color: #ffffff;\">\n         <children>\n            <ImageView fitHeight=\"245.0\" fitWidth=\"250.0\" layoutX=\"28.0\" layoutY=\"128.0\" pickOnBounds=\"true\" preserveRatio=\"true\">\n               <image>\n                  <Image url=\"@../recursos/logoUVLetra.png\" />\n               </image></ImageView>\n         </children>\n      </AnchorPane>\n      <AnchorPane layoutX=\"300.0\" prefHeight=\"500.0\" prefWidth=\"500.0\" style=\"-fx-background-color: #18529D;\">\n         <children>\n            <Label alignment=\"CENTER\" contentDisplay=\"CENTER\" layoutX=\"1.0\" layoutY=\"14.0\" prefHeight=\"60.0\" prefWidth=\"500.0\" text=\"Bienvenido(a)\" textAlignment=\"CENTER\" textFill=\"WHITE\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"50.0\" />\n               </font>\n            </Label>\n            <Label alignment=\"CENTER\" layoutX=\"-3.0\" layoutY=\"104.0\" prefHeight=\"35.0\" prefWidth=\"500.0\" text=\"Ingresa tu usuario y contraseña para\" textFill=\"WHITE\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"30.0\" />\n               </font>\n            </Label>\n            <Label alignment=\"CENTER\" layoutX=\"1.0\" layoutY=\"139.0\" prefHeight=\"35.0\" prefWidth=\"500.0\" text=\"iniciar sesión en la app.\" textFill=\"WHITE\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"30.0\" />\n               </font>\n            </Label>\n            <TextField fx:id=\"tfUsuario\" layoutX=\"71.0\" layoutY=\"217.0\" prefHeight=\"47.0\" prefWidth=\"360.0\" promptText=\"jsanchez\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"25.0\" />\n               </font>\n            </TextField>\n            <PasswordField fx:id=\"tfPassword\" layoutX=\"71.0\" layoutY=\"326.0\" prefHeight=\"47.0\" prefWidth=\"360.0\" promptText=\"12345\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"25.0\" />\n               </font>\n            </PasswordField>\n            <Label alignment=\"CENTER\" layoutX=\"71.0\" layoutY=\"182.0\" prefHeight=\"35.0\" prefWidth=\"102.0\" text=\"Usuario\" textFill=\"WHITE\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"25.0\" />\n               </font>\n            </Label>\n            <Label alignment=\"CENTER\" layoutX=\"71.0\" layoutY=\"291.0\" prefHeight=\"35.0\" prefWidth=\"121.0\" text=\"Contraseña\" textFill=\"WHITE\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"25.0\" />\n               </font>\n            </Label>\n            <Button layoutX=\"146.0\" layoutY=\"423.0\" mnemonicParsing=\"false\" onAction=\"#btnVerificarSesion\" style=\"-fx-background-color: #28AD56; -fx-border-color: #FFF;\" text=\"Iniciar Sesion\" textFill=\"WHITE\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"30.0\" />\n               </font>\n            </Button>\n            <Line endX=\"350.0\" layoutX=\"122.0\" layoutY=\"89.0\" startX=\"-100.0\" stroke=\"WHITE\" strokeWidth=\"5.0\" />\n            <Label fx:id=\"lbErrorUsuario\" alignment=\"CENTER_RIGHT\" layoutX=\"181.0\" layoutY=\"264.0\" prefHeight=\"27.0\" prefWidth=\"250.0\" textFill=\"WHITE\" underline=\"true\" />\n            <Label fx:id=\"lbErrorPassword\" alignment=\"CENTER_RIGHT\" layoutX=\"181.0\" layoutY=\"373.0\" prefHeight=\"27.0\" prefWidth=\"250.0\" textFill=\"WHITE\" underline=\"true\" />\n         </children></AnchorPane>\n   </children>\n</AnchorPane>\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build/classes/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml b/build/classes/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml
+--- a/build/classes/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
++++ b/build/classes/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml	(date 1748475410327)
+@@ -9,9 +9,9 @@
+ <?import javafx.scene.control.*?>
+ <?import javafx.scene.layout.*?>
+ 
+-<AnchorPane prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="practicasprofesionaleslis.controlador.FXMLInicioSesionController">
++<AnchorPane maxHeight="500.0" maxWidth="800.0" minHeight="500.0" minWidth="800.0" prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="practicasprofesionaleslis.controlador.FXMLInicioSesionController">
+    <children>
+-      <AnchorPane prefHeight="500.0" prefWidth="300.0" style="-fx-background-color: #ffffff;">
++      <AnchorPane prefHeight="522.0" prefWidth="300.0" style="-fx-background-color: #ffffff;">
+          <children>
+             <ImageView fitHeight="245.0" fitWidth="250.0" layoutX="28.0" layoutY="128.0" pickOnBounds="true" preserveRatio="true">
+                <image>
+@@ -19,51 +19,51 @@
+                </image></ImageView>
+          </children>
+       </AnchorPane>
+-      <AnchorPane layoutX="300.0" prefHeight="500.0" prefWidth="500.0" style="-fx-background-color: #18529D;">
++      <AnchorPane layoutX="300.0" prefHeight="522.0" prefWidth="523.0" style="-fx-background-color: #18529D;">
+          <children>
+-            <Label alignment="CENTER" contentDisplay="CENTER" layoutX="1.0" layoutY="14.0" prefHeight="60.0" prefWidth="500.0" text="Bienvenido(a)" textAlignment="CENTER" textFill="WHITE">
++            <Label alignment="CENTER" contentDisplay="CENTER" layoutX="4.0" layoutY="14.0" prefHeight="60.0" prefWidth="500.0" text="Bienvenido(a)" textAlignment="CENTER" textFill="WHITE">
+                <font>
+                   <Font name="Gill Sans MT" size="50.0" />
+                </font>
+             </Label>
+-            <Label alignment="CENTER" layoutX="-3.0" layoutY="104.0" prefHeight="35.0" prefWidth="500.0" text="Ingresa tu usuario y contraseña para" textFill="WHITE">
++            <Label alignment="CENTER" layoutY="104.0" prefHeight="35.0" prefWidth="500.0" text="Ingresa tu usuario y contraseña para" textFill="WHITE">
+                <font>
+                   <Font name="Gill Sans MT" size="30.0" />
+                </font>
+             </Label>
+-            <Label alignment="CENTER" layoutX="1.0" layoutY="139.0" prefHeight="35.0" prefWidth="500.0" text="iniciar sesión en la app." textFill="WHITE">
++            <Label alignment="CENTER" layoutX="4.0" layoutY="139.0" prefHeight="35.0" prefWidth="500.0" text="iniciar sesión en la app." textFill="WHITE">
+                <font>
+                   <Font name="Gill Sans MT" size="30.0" />
+                </font>
+             </Label>
+-            <TextField fx:id="tfUsuario" layoutX="71.0" layoutY="217.0" prefHeight="47.0" prefWidth="360.0" promptText="jsanchez">
++            <TextField fx:id="txtfUsuario" layoutX="52.0" layoutY="226.0" prefHeight="38.0" prefWidth="400.0" promptText="jsanchez">
+                <font>
+-                  <Font name="Gill Sans MT" size="25.0" />
++                  <Font name="Gill Sans MT" size="20.0" />
+                </font>
+             </TextField>
+-            <PasswordField fx:id="tfPassword" layoutX="71.0" layoutY="326.0" prefHeight="47.0" prefWidth="360.0" promptText="12345">
++            <PasswordField fx:id="pwdfPassword" layoutX="52.0" layoutY="335.0" prefHeight="38.0" prefWidth="400.0" promptText="12345">
+                <font>
+-                  <Font name="Gill Sans MT" size="25.0" />
++                  <Font name="Gill Sans MT" size="20.0" />
+                </font>
+             </PasswordField>
+-            <Label alignment="CENTER" layoutX="71.0" layoutY="182.0" prefHeight="35.0" prefWidth="102.0" text="Usuario" textFill="WHITE">
++            <Label alignment="CENTER" layoutX="52.0" layoutY="191.0" prefHeight="35.0" prefWidth="89.0" text="Usuario" textFill="WHITE">
+                <font>
+                   <Font name="Gill Sans MT" size="25.0" />
+                </font>
+             </Label>
+-            <Label alignment="CENTER" layoutX="71.0" layoutY="291.0" prefHeight="35.0" prefWidth="121.0" text="Contraseña" textFill="WHITE">
++            <Label alignment="CENTER" layoutX="52.0" layoutY="300.0" prefHeight="35.0" prefWidth="121.0" text="Contraseña" textFill="WHITE">
+                <font>
+                   <Font name="Gill Sans MT" size="25.0" />
+                </font>
+             </Label>
+-            <Button layoutX="146.0" layoutY="423.0" mnemonicParsing="false" onAction="#btnVerificarSesion" style="-fx-background-color: #28AD56; -fx-border-color: #FFF;" text="Iniciar Sesion" textFill="WHITE">
++            <Button layoutX="168.0" layoutY="428.0" mnemonicParsing="false" onAction="#clicBtnVerificarSesion" style="-fx-background-color: #28AD56; -fx-border-color: #FFF;" text="Iniciar Sesion" textFill="WHITE">
+                <font>
+-                  <Font name="Gill Sans MT" size="30.0" />
++                  <Font name="Gill Sans MT" size="25.0" />
+                </font>
+             </Button>
+-            <Line endX="350.0" layoutX="122.0" layoutY="89.0" startX="-100.0" stroke="WHITE" strokeWidth="5.0" />
+-            <Label fx:id="lbErrorUsuario" alignment="CENTER_RIGHT" layoutX="181.0" layoutY="264.0" prefHeight="27.0" prefWidth="250.0" textFill="WHITE" underline="true" />
+-            <Label fx:id="lbErrorPassword" alignment="CENTER_RIGHT" layoutX="181.0" layoutY="373.0" prefHeight="27.0" prefWidth="250.0" textFill="WHITE" underline="true" />
++            <Line endX="350.0" layoutX="125.0" layoutY="89.0" startX="-100.0" stroke="WHITE" strokeWidth="5.0" />
++            <Label fx:id="lblErrorUsuario" alignment="CENTER_RIGHT" layoutX="202.0" layoutY="270.0" prefHeight="27.0" prefWidth="250.0" textFill="WHITE" underline="true" />
++            <Label fx:id="lblErrorPassword" alignment="CENTER_RIGHT" layoutX="202.0" layoutY="382.0" prefHeight="27.0" prefWidth="250.0" textFill="WHITE" underline="true" />
+          </children></AnchorPane>
+    </children>
+ </AnchorPane>
+Index: src/practicasprofesionaleslis/modelo/pojo/ExperienciaEducativa.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package practicasprofesionaleslis.modelo.pojo;\n\npublic class ExperienciaEducativa {\n    private int id;\n    private int nrc;\n    private String nombre;\n    private int creditos;\n    private int numeroHoras;\n    private String bloque;\n    private String seccion;\n\n    public ExperienciaEducativa() {\n    }\n\n    public ExperienciaEducativa(int id, int nrc, String nombre, int creditos, \n                               int numeroHoras, String bloque, String seccion) {\n        this.id = id;\n        this.nrc = nrc;\n        this.nombre = nombre;\n        this.creditos = creditos;\n        this.numeroHoras = numeroHoras;\n        this.bloque = bloque;\n        this.seccion = seccion;\n    }\n\n    public int getId() {\n        return id;\n    }\n\n    public void setId(int id) {\n        this.id = id;\n    }\n\n    public int getNrc() {\n        return nrc;\n    }\n\n    public void setNrc(int nrc) {\n        this.nrc = nrc;\n    }\n\n    public String getNombre() {\n        return nombre;\n    }\n\n    public void setNombre(String nombre) {\n        this.nombre = nombre;\n    }\n\n    public int getCreditos() {\n        return creditos;\n    }\n\n    public void setCreditos(int creditos) {\n        this.creditos = creditos;\n    }\n\n    public int getNumeroHoras() {\n        return numeroHoras;\n    }\n\n    public void setNumeroHoras(int numeroHoras) {\n        this.numeroHoras = numeroHoras;\n    }\n\n    public String getBloque() {\n        return bloque;\n    }\n\n    public void setBloque(String bloque) {\n        this.bloque = bloque;\n    }\n\n    public String getSeccion() {\n        return seccion;\n    }\n\n    public void setSeccion(String seccion) {\n        this.seccion = seccion;\n    }\n\n    @Override\n    public String toString() {\n        return nombre + \" (NRC: \" + nrc + \")\";\n    }\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/modelo/pojo/ExperienciaEducativa.java b/src/practicasprofesionaleslis/modelo/pojo/ExperienciaEducativa.java
+--- a/src/practicasprofesionaleslis/modelo/pojo/ExperienciaEducativa.java	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
++++ b/src/practicasprofesionaleslis/modelo/pojo/ExperienciaEducativa.java	(date 1748475525566)
+@@ -5,22 +5,27 @@
+     private int nrc;
+     private String nombre;
+     private int creditos;
+-    private int numeroHoras;
++    private int numHoras;
+     private String bloque;
+     private String seccion;
++    private Coordinador coordinador;
++    private ProfesorEE profesorEE;
++    private Periodo periodo;
+ 
+     public ExperienciaEducativa() {
+     }
+ 
+-    public ExperienciaEducativa(int id, int nrc, String nombre, int creditos, 
+-                               int numeroHoras, String bloque, String seccion) {
++    public ExperienciaEducativa(int id, int nrc, String nombre, int creditos, int numHoras, String bloque, String seccion, Coordinador coordinador, ProfesorEE profesorEE, Periodo periodo) {
+         this.id = id;
+         this.nrc = nrc;
+         this.nombre = nombre;
+         this.creditos = creditos;
+-        this.numeroHoras = numeroHoras;
++        this.numHoras = numHoras;
+         this.bloque = bloque;
+         this.seccion = seccion;
++        this.coordinador = coordinador;
++        this.profesorEE = profesorEE;
++        this.periodo = periodo;
+     }
+ 
+     public int getId() {
+@@ -55,12 +60,12 @@
+         this.creditos = creditos;
+     }
+ 
+-    public int getNumeroHoras() {
+-        return numeroHoras;
++    public int getNumHoras() {
++        return numHoras;
+     }
+ 
+-    public void setNumeroHoras(int numeroHoras) {
+-        this.numeroHoras = numeroHoras;
++    public void setNumHoras(int numHoras) {
++        this.numHoras = numHoras;
+     }
+ 
+     public String getBloque() {
+@@ -79,8 +84,27 @@
+         this.seccion = seccion;
+     }
+ 
+-    @Override
+-    public String toString() {
+-        return nombre + " (NRC: " + nrc + ")";
++    public Coordinador getCoordinador() {
++        return coordinador;
+     }
+-}
+\ No newline at end of file
++
++    public void setCoordinador(Coordinador coordinador) {
++        this.coordinador = coordinador;
++    }
++
++    public ProfesorEE getProfesorEE() {
++        return profesorEE;
++    }
++
++    public void setProfesorEE(ProfesorEE profesorEE) {
++        this.profesorEE = profesorEE;
++    }
++
++    public Periodo getPeriodo() {
++        return periodo;
++    }
++
++    public void setPeriodo(Periodo periodo) {
++        this.periodo = periodo;
++    }
++}
+Index: build/classes/practicasprofesionaleslis/vista/FXMLPrincipalEvaluador.fxml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build/classes/practicasprofesionaleslis/vista/FXMLPrincipalEvaluador.fxml b/build/classes/practicasprofesionaleslis/vista/FXMLPrincipalEvaluador.fxml
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/build/classes/practicasprofesionaleslis/vista/FXMLPrincipalEvaluador.fxml	(date 1748475410327)
+@@ -0,0 +1,48 @@
++<?xml version="1.0" encoding="UTF-8"?>
++
++<?import javafx.scene.image.*?>
++<?import javafx.scene.text.*?>
++<?import javafx.scene.shape.*?>
++<?import java.lang.*?>
++<?import java.util.*?>
++<?import javafx.scene.*?>
++<?import javafx.scene.control.*?>
++<?import javafx.scene.layout.*?>
++
++
++<AnchorPane id="AnchorPane" prefHeight="650.0" prefWidth="1280.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="practicasprofesionaleslis.controlador.FXMLPrincipalEvaluadorController">
++   <children>
++      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#18529d" height="62.0" stroke="#18529d" strokeType="INSIDE" width="1280.0" />
++      <Label fx:id="lblCorreoInstitucional" layoutX="190.0" layoutY="140.0" text="lizhernandez@uv.mx">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Label>
++      <Label fx:id="lblNombreEvaluador" layoutX="190.0" layoutY="89.0" prefHeight="33.0" prefWidth="450.0" text="Lizbeth Alejandra Hernández González">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Label>
++      <ImageView fx:id="imgFotoPerfil" fitHeight="134.0" fitWidth="143.0" layoutX="28.0" layoutY="89.0" pickOnBounds="true" preserveRatio="true">
++         <image>
++            <Image url="@../recursos/oshawott.jpeg" />
++         </image>
++      </ImageView>
++      <Label layoutX="13.0" layoutY="9.0" prefHeight="46.0" prefWidth="981.0" text="Sistema de Prácticas Profesionales de Ingeniería de Software" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="40.0" />
++         </font>
++      </Label>
++      <Separator layoutX="30.0" layoutY="246.0" prefHeight="0.0" prefWidth="1220.0" />
++      <Button layoutX="1039.0" layoutY="89.0" mnemonicParsing="false" onAction="#clicBtnCerrarSesion" style="-fx-background-color: #28ad56;" text="Cerrar Sesión" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="30.0" />
++         </font>
++      </Button>
++      <Button layoutX="369.0" layoutY="402.0" mnemonicParsing="false" onAction="#clicBtnEvaluarPresentacionEstudiante" style="-fx-background-color: #28ad56;" text="Evaluar Presentación de Estudiante" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="35.0" />
++         </font>
++      </Button>
++   </children>
++</AnchorPane>
+Index: build/classes/practicasprofesionaleslis/vista/FXMLPrincipalProfesorEE.fxml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build/classes/practicasprofesionaleslis/vista/FXMLPrincipalProfesorEE.fxml b/build/classes/practicasprofesionaleslis/vista/FXMLPrincipalProfesorEE.fxml
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/build/classes/practicasprofesionaleslis/vista/FXMLPrincipalProfesorEE.fxml	(date 1748475410327)
+@@ -0,0 +1,53 @@
++<?xml version="1.0" encoding="UTF-8"?>
++
++<?import javafx.scene.image.*?>
++<?import javafx.scene.shape.*?>
++<?import javafx.scene.text.*?>
++<?import java.lang.*?>
++<?import java.util.*?>
++<?import javafx.scene.*?>
++<?import javafx.scene.control.*?>
++<?import javafx.scene.layout.*?>
++
++
++<AnchorPane id="AnchorPane" prefHeight="650.0" prefWidth="1280.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="practicasprofesionaleslis.controlador.FXMLPrincipalProfesorEEController">
++   <children>
++      <Separator layoutX="35.0" layoutY="255.0" prefHeight="7.0" prefWidth="1210.0" style="-fx-border-color: 000000;" />
++      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#18529d" height="62.0" stroke="#18529d" strokeType="INSIDE" width="1280.0" />
++      <ImageView fx:id="imgFotoPerfil" fitHeight="134.0" fitWidth="143.0" layoutX="35.0" layoutY="95.0" pickOnBounds="true" preserveRatio="true">
++         <image>
++            <Image url="@../recursos/oshawott.jpeg" />
++         </image>
++      </ImageView>
++      <Label layoutX="14.0" layoutY="8.0" prefHeight="46.0" prefWidth="997.0" text="Sistema de Prácticas Profesionales de Ingeniería de Software" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="40.0" />
++         </font>
++      </Label>
++      <Button layoutX="1034.0" layoutY="95.0" mnemonicParsing="false" onAction="#clicBtnCerrarSesion" style="-fx-background-color: #28ad56;" text="Cerrar Sesión" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="30.0" />
++         </font>
++      </Button>
++      <Button layoutX="399.0" layoutY="349.0" mnemonicParsing="false" onAction="#clicBtnConsultarExpedienteEstudiante" style="-fx-background-color: #28ad56;" text="Consultar Expediente del Estudiante" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="30.0" />
++         </font>
++      </Button>
++      <Button layoutX="399.0" layoutY="480.0" mnemonicParsing="false" onAction="#clicBtnValidarEntregaDocumentos" prefHeight="55.0" prefWidth="483.0" style="-fx-background-color: #28ad56;" text="Validar Entrega de Documentos" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="30.0" />
++         </font>
++      </Button>
++      <Label fx:id="lblNombreProfesorEE" layoutX="191.0" layoutY="95.0" prefHeight="33.0" prefWidth="550.0" text="Saúl Domínguez Isidro">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Label>
++      <Label fx:id="lblCorreoElectronico" layoutX="191.0" layoutY="146.0" prefHeight="33.0" prefWidth="550.0" text="sauldominguez@uv.mx">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Label>
++   </children>
++</AnchorPane>
+Index: src/practicasprofesionaleslis/PracticasProfesionalesLIS.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package practicasprofesionaleslis;\n\nimport java.io.IOException;\nimport javafx.application.Application;\nimport javafx.fxml.FXMLLoader;\nimport javafx.scene.Parent;\nimport javafx.scene.Scene;\nimport javafx.stage.Stage;\n\npublic class PracticasProfesionalesLIS extends Application {\n    \n    @Override\n    public void start(Stage primaryStage) {\n        try {\n            Parent vista = FXMLLoader.load(getClass().getResource(\"/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml\"));\n            Scene escenaInicioSesion = new Scene(vista);\n            \n            primaryStage.setScene(escenaInicioSesion);\n            primaryStage.setTitle(\"Inicio de Sesión\");\n            primaryStage.show();\n            primaryStage.centerOnScreen();\n        } catch (IOException e) {\n            e.printStackTrace();\n            System.out.println(\"Error: \" + e.getMessage());\n        }\n    }\n\n    public static void main(String[] args) {\n        launch(args);\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/PracticasProfesionalesLIS.java b/src/practicasprofesionaleslis/PracticasProfesionalesLIS.java
+--- a/src/practicasprofesionaleslis/PracticasProfesionalesLIS.java	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
++++ b/src/practicasprofesionaleslis/PracticasProfesionalesLIS.java	(date 1748475410327)
+@@ -16,8 +16,9 @@
+             Scene escenaInicioSesion = new Scene(vista);
+             
+             primaryStage.setScene(escenaInicioSesion);
+-            primaryStage.setTitle("Inicio de Sesión");
++            primaryStage.setTitle("INICIO DE SESIÓN");
+             primaryStage.show();
++            primaryStage.setResizable(false);
+             primaryStage.centerOnScreen();
+         } catch (IOException e) {
+             e.printStackTrace();
+Index: build/classes/practicasprofesionaleslis/vista/FXMLPrincipalCoordinador.fxml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build/classes/practicasprofesionaleslis/vista/FXMLPrincipalCoordinador.fxml b/build/classes/practicasprofesionaleslis/vista/FXMLPrincipalCoordinador.fxml
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/build/classes/practicasprofesionaleslis/vista/FXMLPrincipalCoordinador.fxml	(date 1748475410327)
+@@ -0,0 +1,81 @@
++<?xml version="1.0" encoding="UTF-8"?>
++
++<?import javafx.scene.image.*?>
++<?import javafx.scene.shape.*?>
++<?import javafx.scene.text.*?>
++<?import java.lang.*?>
++<?import java.util.*?>
++<?import javafx.scene.*?>
++<?import javafx.scene.control.*?>
++<?import javafx.scene.layout.*?>
++
++<AnchorPane id="AnchorPane" prefHeight="650.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="practicasprofesionaleslis.controlador.FXMLPrincipalCoordinadorController">
++   <children>
++      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#18529d" height="62.0" stroke="#18529d" strokeType="INSIDE" width="1280.0" />
++      <Label layoutX="14.0" layoutY="10.0" prefHeight="46.0" prefWidth="981.0" text="Sistema de Prácticas Profesionales de Ingeniería de Software" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="40.0" />
++         </font>
++      </Label>
++      <ImageView fx:id="imgFotoPerfil" fitHeight="134.0" fitWidth="143.0" layoutX="29.0" layoutY="90.0" pickOnBounds="true" preserveRatio="true">
++         <image>
++            <Image url="@../recursos/oshawott.jpeg" />
++         </image>
++      </ImageView>
++      <Label fx:id="lblNombreCoordinador" layoutX="191.0" layoutY="90.0" prefHeight="33.0" prefWidth="450.0" text="Ángel Juan Sánchez García">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Label>
++      <Button layoutX="1039.0" layoutY="90.0" mnemonicParsing="false" onAction="#clicBtnCerrarSesion" style="-fx-background-color: #28ad56;" text="Cerrar Sesión" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="30.0" />
++         </font>
++      </Button>
++      <Button layoutX="803.0" layoutY="299.0" mnemonicParsing="false" onAction="#clicBtnRegistrarResponsableProyecto" prefHeight="53.0" prefWidth="447.0" style="-fx-background-color: #28ad56;" text="Registrar Responsable de Proyecto" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Button>
++      <Button layoutX="30.0" layoutY="298.0" mnemonicParsing="false" onAction="#clicBtnRegistrarOrganizacionVinculada" prefHeight="55.0" prefWidth="459.0" style="-fx-background-color: #28ad56;" text="Registrar Organización Vinculada" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Button>
++      <Button layoutX="33.0" layoutY="551.0" mnemonicParsing="false" onAction="#clicBtnGenerarDoctosAsignacion" style="-fx-background-color: #28ad56;" text="Generar Documentos de Asignación" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font></Button>
++      <Separator layoutX="30.0" layoutY="251.0" prefHeight="0.0" prefWidth="1220.0" />
++      <Button layoutX="514.0" layoutY="299.0" mnemonicParsing="false" onAction="#clicBtnRegistrarProyecto" prefHeight="53.0" prefWidth="263.0" style="-fx-background-color: #28ad56;" text="Registrar Proyecto" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Button>
++      <Button layoutX="514.0" layoutY="424.0" mnemonicParsing="false" onAction="#clicBtnActualizarProyecto" style="-fx-background-color: #28ad56;" text="Actualizar Proyecto" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font></Button>
++      <Button layoutX="514.0" layoutY="551.0" mnemonicParsing="false" onAction="#clicBtnAsignarProyecto" prefHeight="53.0" prefWidth="263.0" style="-fx-background-color: #28ad56;" text="Asignar Proyecto" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font></Button>
++      <Button layoutX="30.0" layoutY="423.0" mnemonicParsing="false" onAction="#clicBtnActualizarOrganizacionVinculada" prefHeight="55.0" prefWidth="459.0" style="-fx-background-color: #28ad56;" text="Actualizar Organización Vinculada" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font></Button>
++      <Button layoutX="803.0" layoutY="424.0" mnemonicParsing="false" onAction="#clicBtnActualizarResponsableProyecto" style="-fx-background-color: #28ad56;" text="Actualizar Responsable de Proyecto" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font></Button>
++      <Button layoutX="803.0" layoutY="551.0" mnemonicParsing="false" onAction="#clicBtnProgramarEntregasPracticas" prefHeight="53.0" prefWidth="447.0" style="-fx-background-color: #28ad56;" text="Programar Entregas de Prácticas" textFill="WHITE">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font></Button>
++      <Label fx:id="lblCorreoInstitucional" layoutX="191.0" layoutY="141.0" text="asanchez@uv.mx">
++         <font>
++            <Font name="Gill Sans MT" size="28.0" />
++         </font>
++      </Label>
++   </children>
++</AnchorPane>
+Index: src/practicasprofesionaleslis/utilidades/UtilidadesVentanas.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/utilidades/UtilidadesVentanas.java b/src/practicasprofesionaleslis/utilidades/UtilidadesVentanas.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/utilidades/UtilidadesVentanas.java	(date 1748475410327)
+@@ -0,0 +1,48 @@
++package practicasprofesionaleslis.utilidades;
++
++import java.io.IOException;
++import java.util.Optional;
++import javafx.fxml.FXMLLoader;
++import javafx.scene.Parent;
++import javafx.scene.Scene;
++import javafx.scene.control.Alert;
++import javafx.scene.control.ButtonType;
++import javafx.scene.control.Control;
++import javafx.stage.Stage;
++import practicasprofesionaleslis.PracticasProfesionalesLIS;
++
++public class UtilidadesVentanas {
++    public static Optional<ButtonType> mostrarAlertaSimple(Alert.AlertType tipo,
++            String titulo, String contenido) {
++        Alert alerta = new Alert(tipo);
++        alerta.setTitle(titulo);
++        alerta.setHeaderText(null);
++        alerta.setContentText(contenido);
++        return alerta.showAndWait();
++    }
++    
++    public static Stage obtenerEscenarioComponente(Control componente) {
++        return (Stage) componente.getScene().getWindow();
++    }
++    
++    public static void irInicioSesion(Control componente) {
++        try {
++            Stage escenarioBase = (Stage) componente.getScene().getWindow();
++            Parent vista = FXMLLoader.load(PracticasProfesionalesLIS.class.getResource("/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml"));
++            Scene escenaPrincipal = new Scene(vista);
++            
++            escenarioBase.setScene(escenaPrincipal);
++            escenarioBase.setTitle("INICIO DE SESIÓN");
++            escenarioBase.show();
++            escenarioBase.setResizable(false);
++            escenarioBase.centerOnScreen();
++        } catch (IOException e) {
++            e.printStackTrace();
++            System.out.println("Error: " + e.getMessage());
++        }
++    }
++    
++    public static void cerrarVentana(Control componente) {
++        ((Stage) componente.getScene().getWindow()).close();
++    }
++}
+Index: src/practicasprofesionaleslis/vista/FXMLPrincipalEstudiante.fxml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n<?import javafx.scene.paint.*?>\n<?import javafx.scene.shape.*?>\n<?import javafx.scene.text.*?>\n<?import javafx.scene.image.*?>\n<?import java.lang.*?>\n<?import java.util.*?>\n<?import javafx.scene.*?>\n<?import javafx.scene.control.*?>\n<?import javafx.scene.layout.*?>\n\n<AnchorPane id=\"AnchorPane\" prefHeight=\"650.0\" prefWidth=\"1280.0\" xmlns=\"http://javafx.com/javafx/8\" xmlns:fx=\"http://javafx.com/fxml/1\" fx:controller=\"practicasprofesionaleslis.controlador.FXMLPrincipalEstudianteController\">\n   <children>\n      <ImageView fitHeight=\"134.0\" fitWidth=\"143.0\" layoutX=\"34.0\" layoutY=\"93.0\" pickOnBounds=\"true\" preserveRatio=\"true\">\n         <image>\n            <Image url=\"@../recursos/oshawott.jpeg\" />\n         </image>\n      </ImageView>\n      <Label fx:id=\"lbNombreEstudiante\" layoutX=\"191.0\" layoutY=\"93.0\" prefHeight=\"29.0\" prefWidth=\"429.0\" text=\"Mauricio Noriega Delgado\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"24.0\" />\n         </font>\n      </Label>\n      <Label layoutX=\"191.0\" layoutY=\"135.0\" prefHeight=\"2.0\" prefWidth=\"138.0\" text=\"S23014046\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"24.0\" />\n         </font>\n      </Label>\n      <Label layoutX=\"191.0\" layoutY=\"174.0\" prefHeight=\"0.0\" prefWidth=\"679.0\" text=\"Implementación de un Chatbot para FedEx\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"24.0\" />\n         </font>\n      </Label>\n      <Rectangle arcHeight=\"5.0\" arcWidth=\"5.0\" fill=\"#18529d\" height=\"62.0\" stroke=\"BLACK\" strokeType=\"INSIDE\" width=\"1280.0\" />\n      <Label layoutX=\"17.0\" layoutY=\"8.0\" prefHeight=\"46.0\" prefWidth=\"997.0\" text=\"Sistema de Prácticas Profesionales de Ingeniería de Software\" textFill=\"WHITE\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"40.0\" />\n         </font>\n      </Label>\n      <Button layoutX=\"1031.0\" layoutY=\"95.0\" mnemonicParsing=\"false\" onAction=\"#btnCerrarSesion\" prefHeight=\"38.0\" prefWidth=\"216.0\" style=\"-fx-background-color: #28ad56;\" text=\"Cerrar Sesión\" textFill=\"WHITE\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"30.0\" />\n         </font>\n      </Button>\n      <Button layoutX=\"94.0\" layoutY=\"345.0\" mnemonicParsing=\"false\" prefHeight=\"74.0\" prefWidth=\"410.0\" style=\"-fx-background-color: #28ad56;\" text=\"Consultar Avance\" textFill=\"WHITE\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"40.0\" />\n         </font>\n      </Button>\n      <Button layoutX=\"94.0\" layoutY=\"488.0\" mnemonicParsing=\"false\" prefHeight=\"74.0\" prefWidth=\"410.0\" style=\"-fx-background-color: #28ad56;\" text=\"Actualizar Expediente\" textFill=\"WHITE\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"40.0\" />\n         </font>\n      </Button>\n      <Button layoutX=\"604.0\" layoutY=\"488.0\" mnemonicParsing=\"false\" prefHeight=\"74.0\" prefWidth=\"573.0\" style=\"-fx-background-color: #28ad56;\" text=\"Evaluar Organización Vinculada\" textFill=\"WHITE\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"40.0\" />\n         </font>\n      </Button>\n      <Button layoutX=\"604.0\" layoutY=\"345.0\" mnemonicParsing=\"false\" style=\"-fx-background-color: #28ad56;\" text=\"Generar Formato de Evaluación\" textFill=\"WHITE\">\n         <font>\n            <Font name=\"Gill Sans MT\" size=\"40.0\" />\n         </font>\n      </Button>\n   </children>\n</AnchorPane>\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/vista/FXMLPrincipalEstudiante.fxml b/src/practicasprofesionaleslis/vista/FXMLPrincipalEstudiante.fxml
+--- a/src/practicasprofesionaleslis/vista/FXMLPrincipalEstudiante.fxml	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
++++ b/src/practicasprofesionaleslis/vista/FXMLPrincipalEstudiante.fxml	(date 1748475410327)
+@@ -12,56 +12,57 @@
+ 
+ <AnchorPane id="AnchorPane" prefHeight="650.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="practicasprofesionaleslis.controlador.FXMLPrincipalEstudianteController">
+    <children>
+-      <ImageView fitHeight="134.0" fitWidth="143.0" layoutX="34.0" layoutY="93.0" pickOnBounds="true" preserveRatio="true">
++      <ImageView fx:id="imgFotoPerfil" fitHeight="134.0" fitWidth="143.0" layoutX="34.0" layoutY="93.0" pickOnBounds="true" preserveRatio="true">
+          <image>
+             <Image url="@../recursos/oshawott.jpeg" />
+          </image>
+       </ImageView>
+-      <Label fx:id="lbNombreEstudiante" layoutX="191.0" layoutY="93.0" prefHeight="29.0" prefWidth="429.0" text="Mauricio Noriega Delgado">
++      <Label fx:id="lblNombreEstudiante" layoutX="191.0" layoutY="93.0" prefHeight="29.0" prefWidth="429.0">
+          <font>
+             <Font name="Gill Sans MT" size="24.0" />
+          </font>
+       </Label>
+-      <Label layoutX="191.0" layoutY="135.0" prefHeight="2.0" prefWidth="138.0" text="S23014046">
++      <Label fx:id="lblMatricula" layoutX="191.0" layoutY="135.0" prefHeight="2.0" prefWidth="138.0">
+          <font>
+             <Font name="Gill Sans MT" size="24.0" />
+          </font>
+       </Label>
+-      <Label layoutX="191.0" layoutY="174.0" prefHeight="0.0" prefWidth="679.0" text="Implementación de un Chatbot para FedEx">
++      <Label fx:id="lblProyecto" layoutX="191.0" layoutY="174.0" prefHeight="0.0" prefWidth="679.0">
+          <font>
+             <Font name="Gill Sans MT" size="24.0" />
+          </font>
+       </Label>
+-      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#18529d" height="62.0" stroke="BLACK" strokeType="INSIDE" width="1280.0" />
++      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#18529d" height="62.0" stroke="#18529d" strokeType="INSIDE" width="1280.0" />
+       <Label layoutX="17.0" layoutY="8.0" prefHeight="46.0" prefWidth="997.0" text="Sistema de Prácticas Profesionales de Ingeniería de Software" textFill="WHITE">
+          <font>
+             <Font name="Gill Sans MT" size="40.0" />
+          </font>
+       </Label>
+-      <Button layoutX="1031.0" layoutY="95.0" mnemonicParsing="false" onAction="#btnCerrarSesion" prefHeight="38.0" prefWidth="216.0" style="-fx-background-color: #28ad56;" text="Cerrar Sesión" textFill="WHITE">
++      <Button layoutX="1031.0" layoutY="95.0" mnemonicParsing="false" onAction="#clicBtnCerrarSesion" prefHeight="38.0" prefWidth="216.0" style="-fx-background-color: #28ad56;" text="Cerrar Sesión" textFill="WHITE">
+          <font>
+             <Font name="Gill Sans MT" size="30.0" />
+          </font>
+       </Button>
+-      <Button layoutX="94.0" layoutY="345.0" mnemonicParsing="false" prefHeight="74.0" prefWidth="410.0" style="-fx-background-color: #28ad56;" text="Consultar Avance" textFill="WHITE">
++      <Button layoutX="172.0" layoutY="345.0" mnemonicParsing="false" onAction="#clicBtnConsultarAvance" prefHeight="29.0" prefWidth="329.0" style="-fx-background-color: #28ad56;" text="Consultar Avance" textFill="WHITE">
+          <font>
+-            <Font name="Gill Sans MT" size="40.0" />
++            <Font name="Gill Sans MT" size="30.0" />
+          </font>
+       </Button>
+-      <Button layoutX="94.0" layoutY="488.0" mnemonicParsing="false" prefHeight="74.0" prefWidth="410.0" style="-fx-background-color: #28ad56;" text="Actualizar Expediente" textFill="WHITE">
++      <Button layoutX="172.0" layoutY="488.0" mnemonicParsing="false" onAction="#clicBtnActualizarExpediente" prefHeight="46.0" prefWidth="329.0" style="-fx-background-color: #28ad56;" text="Actualizar Expediente" textFill="WHITE">
+          <font>
+-            <Font name="Gill Sans MT" size="40.0" />
++            <Font name="Gill Sans MT" size="30.0" />
+          </font>
+       </Button>
+-      <Button layoutX="604.0" layoutY="488.0" mnemonicParsing="false" prefHeight="74.0" prefWidth="573.0" style="-fx-background-color: #28ad56;" text="Evaluar Organización Vinculada" textFill="WHITE">
++      <Button layoutX="670.0" layoutY="488.0" mnemonicParsing="false" onAction="#clicBtnEvaluarOrganizacionVinculada" prefHeight="55.0" prefWidth="429.0" style="-fx-background-color: #28ad56;" text="Evaluar Organización Vinculada" textFill="WHITE">
+          <font>
+-            <Font name="Gill Sans MT" size="40.0" />
++            <Font name="Gill Sans MT" size="30.0" />
+          </font>
+       </Button>
+-      <Button layoutX="604.0" layoutY="345.0" mnemonicParsing="false" style="-fx-background-color: #28ad56;" text="Generar Formato de Evaluación" textFill="WHITE">
++      <Button layoutX="670.0" layoutY="345.0" mnemonicParsing="false" onAction="#clicBtnGenerarFormatoEvaluacion" style="-fx-background-color: #28ad56;" text="Generar Formato de Evaluación" textFill="WHITE">
+          <font>
+-            <Font name="Gill Sans MT" size="40.0" />
++            <Font name="Gill Sans MT" size="30.0" />
+          </font>
+       </Button>
++      <Separator layoutX="35.0" layoutY="258.0" prefHeight="7.0" prefWidth="1210.0" style="-fx-border-color: 000000;" />
+    </children>
+ </AnchorPane>
+Index: src/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n<?import javafx.scene.shape.*?>\n<?import javafx.scene.text.*?>\n<?import javafx.scene.image.*?>\n<?import java.lang.*?>\n<?import java.util.*?>\n<?import javafx.scene.*?>\n<?import javafx.scene.control.*?>\n<?import javafx.scene.layout.*?>\n\n<AnchorPane prefHeight=\"500.0\" prefWidth=\"800.0\" xmlns=\"http://javafx.com/javafx/8\" xmlns:fx=\"http://javafx.com/fxml/1\" fx:controller=\"practicasprofesionaleslis.controlador.FXMLInicioSesionController\">\n   <children>\n      <AnchorPane prefHeight=\"500.0\" prefWidth=\"300.0\" style=\"-fx-background-color: #ffffff;\">\n         <children>\n            <ImageView fitHeight=\"245.0\" fitWidth=\"250.0\" layoutX=\"28.0\" layoutY=\"128.0\" pickOnBounds=\"true\" preserveRatio=\"true\">\n               <image>\n                  <Image url=\"@../recursos/logoUVLetra.png\" />\n               </image></ImageView>\n         </children>\n      </AnchorPane>\n      <AnchorPane layoutX=\"300.0\" prefHeight=\"500.0\" prefWidth=\"500.0\" style=\"-fx-background-color: #18529D;\">\n         <children>\n            <Label alignment=\"CENTER\" contentDisplay=\"CENTER\" layoutX=\"1.0\" layoutY=\"14.0\" prefHeight=\"60.0\" prefWidth=\"500.0\" text=\"Bienvenido(a)\" textAlignment=\"CENTER\" textFill=\"WHITE\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"50.0\" />\n               </font>\n            </Label>\n            <Label alignment=\"CENTER\" layoutX=\"-3.0\" layoutY=\"104.0\" prefHeight=\"35.0\" prefWidth=\"500.0\" text=\"Ingresa tu usuario y contraseña para\" textFill=\"WHITE\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"30.0\" />\n               </font>\n            </Label>\n            <Label alignment=\"CENTER\" layoutX=\"1.0\" layoutY=\"139.0\" prefHeight=\"35.0\" prefWidth=\"500.0\" text=\"iniciar sesión en la app.\" textFill=\"WHITE\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"30.0\" />\n               </font>\n            </Label>\n            <TextField fx:id=\"tfUsuario\" layoutX=\"71.0\" layoutY=\"217.0\" prefHeight=\"47.0\" prefWidth=\"360.0\" promptText=\"jsanchez\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"25.0\" />\n               </font>\n            </TextField>\n            <PasswordField fx:id=\"tfPassword\" layoutX=\"71.0\" layoutY=\"326.0\" prefHeight=\"47.0\" prefWidth=\"360.0\" promptText=\"12345\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"25.0\" />\n               </font>\n            </PasswordField>\n            <Label alignment=\"CENTER\" layoutX=\"71.0\" layoutY=\"182.0\" prefHeight=\"35.0\" prefWidth=\"102.0\" text=\"Usuario\" textFill=\"WHITE\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"25.0\" />\n               </font>\n            </Label>\n            <Label alignment=\"CENTER\" layoutX=\"71.0\" layoutY=\"291.0\" prefHeight=\"35.0\" prefWidth=\"121.0\" text=\"Contraseña\" textFill=\"WHITE\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"25.0\" />\n               </font>\n            </Label>\n            <Button layoutX=\"146.0\" layoutY=\"423.0\" mnemonicParsing=\"false\" onAction=\"#btnVerificarSesion\" style=\"-fx-background-color: #28AD56; -fx-border-color: #FFF;\" text=\"Iniciar Sesion\" textFill=\"WHITE\">\n               <font>\n                  <Font name=\"Gill Sans MT\" size=\"30.0\" />\n               </font>\n            </Button>\n            <Line endX=\"350.0\" layoutX=\"122.0\" layoutY=\"89.0\" startX=\"-100.0\" stroke=\"WHITE\" strokeWidth=\"5.0\" />\n            <Label fx:id=\"lbErrorUsuario\" alignment=\"CENTER_RIGHT\" layoutX=\"181.0\" layoutY=\"264.0\" prefHeight=\"27.0\" prefWidth=\"250.0\" textFill=\"WHITE\" underline=\"true\" />\n            <Label fx:id=\"lbErrorPassword\" alignment=\"CENTER_RIGHT\" layoutX=\"181.0\" layoutY=\"373.0\" prefHeight=\"27.0\" prefWidth=\"250.0\" textFill=\"WHITE\" underline=\"true\" />\n         </children></AnchorPane>\n   </children>\n</AnchorPane>\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml b/src/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml
+--- a/src/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
++++ b/src/practicasprofesionaleslis/vista/FXMLInicioSesion.fxml	(date 1748475410327)
+@@ -9,9 +9,9 @@
+ <?import javafx.scene.control.*?>
+ <?import javafx.scene.layout.*?>
+ 
+-<AnchorPane prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="practicasprofesionaleslis.controlador.FXMLInicioSesionController">
++<AnchorPane maxHeight="500.0" maxWidth="800.0" minHeight="500.0" minWidth="800.0" prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="practicasprofesionaleslis.controlador.FXMLInicioSesionController">
+    <children>
+-      <AnchorPane prefHeight="500.0" prefWidth="300.0" style="-fx-background-color: #ffffff;">
++      <AnchorPane prefHeight="522.0" prefWidth="300.0" style="-fx-background-color: #ffffff;">
+          <children>
+             <ImageView fitHeight="245.0" fitWidth="250.0" layoutX="28.0" layoutY="128.0" pickOnBounds="true" preserveRatio="true">
+                <image>
+@@ -19,51 +19,51 @@
+                </image></ImageView>
+          </children>
+       </AnchorPane>
+-      <AnchorPane layoutX="300.0" prefHeight="500.0" prefWidth="500.0" style="-fx-background-color: #18529D;">
++      <AnchorPane layoutX="300.0" prefHeight="522.0" prefWidth="523.0" style="-fx-background-color: #18529D;">
+          <children>
+-            <Label alignment="CENTER" contentDisplay="CENTER" layoutX="1.0" layoutY="14.0" prefHeight="60.0" prefWidth="500.0" text="Bienvenido(a)" textAlignment="CENTER" textFill="WHITE">
++            <Label alignment="CENTER" contentDisplay="CENTER" layoutX="4.0" layoutY="14.0" prefHeight="60.0" prefWidth="500.0" text="Bienvenido(a)" textAlignment="CENTER" textFill="WHITE">
+                <font>
+                   <Font name="Gill Sans MT" size="50.0" />
+                </font>
+             </Label>
+-            <Label alignment="CENTER" layoutX="-3.0" layoutY="104.0" prefHeight="35.0" prefWidth="500.0" text="Ingresa tu usuario y contraseña para" textFill="WHITE">
++            <Label alignment="CENTER" layoutY="104.0" prefHeight="35.0" prefWidth="500.0" text="Ingresa tu usuario y contraseña para" textFill="WHITE">
+                <font>
+                   <Font name="Gill Sans MT" size="30.0" />
+                </font>
+             </Label>
+-            <Label alignment="CENTER" layoutX="1.0" layoutY="139.0" prefHeight="35.0" prefWidth="500.0" text="iniciar sesión en la app." textFill="WHITE">
++            <Label alignment="CENTER" layoutX="4.0" layoutY="139.0" prefHeight="35.0" prefWidth="500.0" text="iniciar sesión en la app." textFill="WHITE">
+                <font>
+                   <Font name="Gill Sans MT" size="30.0" />
+                </font>
+             </Label>
+-            <TextField fx:id="tfUsuario" layoutX="71.0" layoutY="217.0" prefHeight="47.0" prefWidth="360.0" promptText="jsanchez">
++            <TextField fx:id="txtfUsuario" layoutX="52.0" layoutY="226.0" prefHeight="38.0" prefWidth="400.0" promptText="jsanchez">
+                <font>
+-                  <Font name="Gill Sans MT" size="25.0" />
++                  <Font name="Gill Sans MT" size="20.0" />
+                </font>
+             </TextField>
+-            <PasswordField fx:id="tfPassword" layoutX="71.0" layoutY="326.0" prefHeight="47.0" prefWidth="360.0" promptText="12345">
++            <PasswordField fx:id="pwdfPassword" layoutX="52.0" layoutY="335.0" prefHeight="38.0" prefWidth="400.0" promptText="12345">
+                <font>
+-                  <Font name="Gill Sans MT" size="25.0" />
++                  <Font name="Gill Sans MT" size="20.0" />
+                </font>
+             </PasswordField>
+-            <Label alignment="CENTER" layoutX="71.0" layoutY="182.0" prefHeight="35.0" prefWidth="102.0" text="Usuario" textFill="WHITE">
++            <Label alignment="CENTER" layoutX="52.0" layoutY="191.0" prefHeight="35.0" prefWidth="89.0" text="Usuario" textFill="WHITE">
+                <font>
+                   <Font name="Gill Sans MT" size="25.0" />
+                </font>
+             </Label>
+-            <Label alignment="CENTER" layoutX="71.0" layoutY="291.0" prefHeight="35.0" prefWidth="121.0" text="Contraseña" textFill="WHITE">
++            <Label alignment="CENTER" layoutX="52.0" layoutY="300.0" prefHeight="35.0" prefWidth="121.0" text="Contraseña" textFill="WHITE">
+                <font>
+                   <Font name="Gill Sans MT" size="25.0" />
+                </font>
+             </Label>
+-            <Button layoutX="146.0" layoutY="423.0" mnemonicParsing="false" onAction="#btnVerificarSesion" style="-fx-background-color: #28AD56; -fx-border-color: #FFF;" text="Iniciar Sesion" textFill="WHITE">
++            <Button layoutX="168.0" layoutY="428.0" mnemonicParsing="false" onAction="#clicBtnVerificarSesion" style="-fx-background-color: #28AD56; -fx-border-color: #FFF;" text="Iniciar Sesion" textFill="WHITE">
+                <font>
+-                  <Font name="Gill Sans MT" size="30.0" />
++                  <Font name="Gill Sans MT" size="25.0" />
+                </font>
+             </Button>
+-            <Line endX="350.0" layoutX="122.0" layoutY="89.0" startX="-100.0" stroke="WHITE" strokeWidth="5.0" />
+-            <Label fx:id="lbErrorUsuario" alignment="CENTER_RIGHT" layoutX="181.0" layoutY="264.0" prefHeight="27.0" prefWidth="250.0" textFill="WHITE" underline="true" />
+-            <Label fx:id="lbErrorPassword" alignment="CENTER_RIGHT" layoutX="181.0" layoutY="373.0" prefHeight="27.0" prefWidth="250.0" textFill="WHITE" underline="true" />
++            <Line endX="350.0" layoutX="125.0" layoutY="89.0" startX="-100.0" stroke="WHITE" strokeWidth="5.0" />
++            <Label fx:id="lblErrorUsuario" alignment="CENTER_RIGHT" layoutX="202.0" layoutY="270.0" prefHeight="27.0" prefWidth="250.0" textFill="WHITE" underline="true" />
++            <Label fx:id="lblErrorPassword" alignment="CENTER_RIGHT" layoutX="202.0" layoutY="382.0" prefHeight="27.0" prefWidth="250.0" textFill="WHITE" underline="true" />
+          </children></AnchorPane>
+    </children>
+ </AnchorPane>
+Index: src/practicasprofesionaleslis/utilidades/ValidadorID.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/utilidades/ValidadorID.java b/src/practicasprofesionaleslis/utilidades/ValidadorID.java
+new file mode 100644
+--- /dev/null	(date 1748475410327)
++++ b/src/practicasprofesionaleslis/utilidades/ValidadorID.java	(date 1748475410327)
+@@ -0,0 +1,26 @@
++package practicasprofesionaleslis.utilidades;
++
++import java.util.regex.Pattern;
++
++public class ValidadorID {
++    private static final String REGEX_ESTUDIANTE = "^S\\d{8}$";
++    private static final String REGEX_COORDINADOR = "^C\\d{3}$";
++    private static final String REGEX_PROFESOR = "^P\\d{3}$";
++    private static final String REGEX_EVALUADOR = "^E\\d{3}$";
++    
++    public static boolean validarIDEstudiante(String id) {
++        return Pattern.matches(REGEX_ESTUDIANTE, id);
++    }
++    
++    public static boolean validarIDCoordinador(String id) {
++        return Pattern.matches(REGEX_COORDINADOR, id);
++    }
++    
++    public static boolean validarIDProfesor(String id) {
++        return Pattern.matches(REGEX_PROFESOR, id);
++    }
++    
++    public static boolean validarIDEvaluador(String id) {
++        return Pattern.matches(REGEX_EVALUADOR, id);
++    }
++}
+Index: src/practicasprofesionaleslis/modelo/ConexionBD.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package practicasprofesionaleslis.modelo;\n\nimport java.sql.Connection;\nimport java.sql.DriverManager;\nimport java.sql.SQLException;\n\npublic class ConexionBD {\n    private static final String IP = \"localhost\";\n    private static final String PUERTO = \"3306\";\n    private static final String NOMBRE_BD = \"escolar\";\n    private static final String USUARIO = \"root\";\n    private static final String PASSWORD = \"MaNDel1605\";\n    private static final String DRIVER = \"com.mysql.jdbc.Driver\";\n    \n    public static Connection abrirConexion() {\n        Connection conexionBD = null;\n        String url = String.format(\n            \"jdbc:mysql://%s:%s/%s?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC\",\n            IP, PUERTO, NOMBRE_BD\n        );\n        \n        try {\n            Class.forName(DRIVER);\n            conexionBD = DriverManager.getConnection(url, USUARIO, PASSWORD);\n        } catch (ClassNotFoundException e) {\n            System.err.println(\"Error ClassNotFound: \" + e.getMessage());\n        } catch (SQLException e) {\n            System.err.println(\"Error de conexión: \" + e.getMessage());\n        }\n        return conexionBD;\n    }\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/practicasprofesionaleslis/modelo/ConexionBD.java b/src/practicasprofesionaleslis/modelo/ConexionBD.java
+--- a/src/practicasprofesionaleslis/modelo/ConexionBD.java	(revision f736d112f097c3043bd9d15b73e71f6d635b9698)
++++ b/src/practicasprofesionaleslis/modelo/ConexionBD.java	(date 1748475410327)
+@@ -7,9 +7,9 @@
+ public class ConexionBD {
+     private static final String IP = "localhost";
+     private static final String PUERTO = "3306";
+-    private static final String NOMBRE_BD = "escolar";
+-    private static final String USUARIO = "root";
+-    private static final String PASSWORD = "MaNDel1605";
++    private static final String NOMBRE_BD = "pplis";
++    private static final String USUARIO = "pplisAdmin";
++    private static final String PASSWORD = "pplis-15811";
+     private static final String DRIVER = "com.mysql.jdbc.Driver";
+     
+     public static Connection abrirConexion() {

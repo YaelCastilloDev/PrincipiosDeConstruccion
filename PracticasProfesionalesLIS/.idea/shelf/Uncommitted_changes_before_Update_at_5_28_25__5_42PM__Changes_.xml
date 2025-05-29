@@ -1,0 +1,108 @@
+<changelist name="Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]" date="1748475771427" recycled="false" toDelete="true">
+  <option name="PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/shelved.patch" />
+  <option name="DESCRIPTION" value="Uncommitted changes before Update at 5/28/25, 5:42 PM [Changes]" />
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/utilidades/ValidadorID.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/ValidadorID.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="build/classes/practicasprofesionaleslis/controlador/FXMLPrincipalEstudianteController.class" />
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/controlador/FXMLPrincipalEstudianteController.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/FXMLPrincipalEstudianteController.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/controlador/FXMLPrincipalProfesorEEController.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/FXMLPrincipalProfesorEEController.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/modelo/pojo/Expediente$Estado.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/Expediente$Estado.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/modelo/pojo/Proyecto.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/Proyecto.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/controlador/FXMLPrincipalEvaluadorController.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/FXMLPrincipalEvaluadorController.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/modelo/pojo/Estudiante.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/Estudiante.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/modelo/pojo/ExperienciaEducativa.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/ExperienciaEducativa.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="build/classes/practicasprofesionaleslis/utilidades/Utilidades.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="build/classes/practicasprofesionaleslis/modelo/pojo/Usuario.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/modelo/pojo/Coordinador.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/Coordinador.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/modelo/pojo/OrganizacionVinculada.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/OrganizacionVinculada.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/utilidades/UtilidadesVentanas.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/UtilidadesVentanas.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="dist/PracticasProfesionalesLIS.jar" />
+    <option name="AFTER_PATH" value="dist/PracticasProfesionalesLIS.jar" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/PracticasProfesionalesLIS.jar" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="build/classes/practicasprofesionaleslis/modelo/dao/InicioSesionDAO.class" />
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/modelo/dao/InicioSesionDAO.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/InicioSesionDAO.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/controlador/FXMLPrincipalCoordinadorController.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/FXMLPrincipalCoordinadorController.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="build/classes/practicasprofesionaleslis/PracticasProfesionalesLIS.class" />
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/PracticasProfesionalesLIS.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/PracticasProfesionalesLIS.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="build/classes/practicasprofesionaleslis/controlador/FXMLInicioSesionController.class" />
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/controlador/FXMLInicioSesionController.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/FXMLInicioSesionController.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/modelo/pojo/Expediente.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/Expediente.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/modelo/pojo/ResponsableProyecto.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/ResponsableProyecto.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/modelo/dao/ExpedienteDAO.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/ExpedienteDAO.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/modelo/pojo/Evaluador.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/Evaluador.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/modelo/pojo/ProfesorEE.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/ProfesorEE.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="build/classes/practicasprofesionaleslis/modelo/ConexionBD.class" />
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/modelo/ConexionBD.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/ConexionBD.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="build/classes/practicasprofesionaleslis/modelo/pojo/Periodo.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_28_25,_5_42 PM_[Changes]/Periodo.class" />
+  </binary>
+</changelist>
