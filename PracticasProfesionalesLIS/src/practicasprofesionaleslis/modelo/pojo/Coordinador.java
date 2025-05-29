@@ -1,6 +1,9 @@
 package practicasprofesionaleslis.modelo.pojo;
 
+import javax.validation.*;
+
 public class Coordinador {
+    
     private int id;
     private String numeroPersonal;
     private String nombre;
