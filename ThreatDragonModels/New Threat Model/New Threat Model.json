@@ -28,11 +28,11 @@
             },
             "attrs": {
               "text": {
-                "text": "Web "
+                "text": "Web"
               },
               "body": {
-                "stroke": "red",
-                "strokeWidth": 2.5,
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
                 "strokeDasharray": null
               }
             },
@@ -137,7 +137,7 @@
               "threats": [
                 {
                   "id": "59bb3354-55cb-4d84-a85d-fc04295781aa",
-                  "title": "New STRIDE threat",
+                  "title": "Suplantación de identidad",
                   "status": "Open",
                   "severity": "Medium",
                   "type": "Spoofing",
@@ -147,10 +147,49 @@
                   "new": false,
                   "number": 2,
                   "score": ""
+                },
+                {
+                  "id": "0dcca9c0-b121-4906-b5ea-20e889edfa6c",
+                  "title": "Fuga de información por robo de dispositivos móviles",
+                  "status": "Open",
+                  "severity": "TBD",
+                  "type": "Spoofing",
+                  "description": "Provide a description for this threat",
+                  "mitigation": "Provide remediation for this threat or a reason if status is N/A",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 6,
+                  "score": ""
+                },
+                {
+                  "id": "2bd79a70-3141-4aa7-a244-bf39faecf8a0",
+                  "title": "Secuestro de sesión",
+                  "status": "Open",
+                  "severity": "TBD",
+                  "type": "Spoofing",
+                  "description": "Provide a description for this threat",
+                  "mitigation": "Provide remediation for this threat or a reason if status is N/A",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 7,
+                  "score": ""
+                },
+                {
+                  "id": "2baf8d5d-d5b0-4f1c-ac6d-0767b2fb9173",
+                  "title": "New STRIDE threat",
+                  "status": "Open",
+                  "severity": "TBD",
+                  "type": "Tampering",
+                  "description": "Provide a description for this threat",
+                  "mitigation": "Provide remediation for this threat or a reason if status is N/A",
+                  "modelType": "STRIDE",
+                  "new": true,
+                  "number": 9,
+                  "score": ""
                 }
               ],
               "threatFrequency": {
-                "spoofing": 1,
+                "spoofing": 4,
                 "tampering": 0,
                 "repudiation": 0,
                 "informationDisclosure": 0,
@@ -282,7 +321,7 @@
               "threats": [
                 {
                   "id": "6fe10da1-5003-4c54-a49d-180eb914d083",
-                  "title": "New STRIDE threat",
+                  "title": "Exploits del día cero",
                   "status": "Open",
                   "severity": "High",
                   "type": "Denial of service",
@@ -299,7 +338,7 @@
                 "tampering": 0,
                 "repudiation": 0,
                 "informationDisclosure": 0,
-                "denialOfService": 1,
+                "denialOfService": 2,
                 "elevationOfPrivilege": 0
               }
             }
@@ -781,7 +820,7 @@
               "threats": [
                 {
                   "id": "01f68ce2-b2c9-409c-8a6b-3630c25a6047",
-                  "title": "New STRIDE threat",
+                  "title": "SQL INJECTION",
                   "status": "Open",
                   "severity": "High",
                   "type": "Elevation of privilege",
@@ -791,6 +830,19 @@
                   "new": false,
                   "number": 5,
                   "score": ""
+                },
+                {
+                  "id": "498e9aff-5978-4905-a58b-aae8865acc61",
+                  "title": "New STRIDE threat",
+                  "status": "Open",
+                  "severity": "TBD",
+                  "type": "Spoofing",
+                  "description": "Provide a description for this threat",
+                  "mitigation": "Provide remediation for this threat or a reason if status is N/A",
+                  "modelType": "STRIDE",
+                  "new": true,
+                  "number": 8,
+                  "score": ""
                 }
               ],
               "threatFrequency": {
@@ -799,17 +851,10 @@
                 "repudiation": 0,
                 "informationDisclosure": 0,
                 "denialOfService": 0,
-                "elevationOfPrivilege": 2
+                "elevationOfPrivilege": 3
               }
             },
-            "zIndex": 6,
-            "tools": {
-              "items": [
-                "boundary",
-                "button-remove"
-              ],
-              "name": null
-            }
+            "zIndex": 6
           },
           {
             "shape": "flow",
@@ -1120,18 +1165,23 @@
               "threats": [
                 {
                   "id": "dcc8dc89-8b4b-42b3-9547-87b96b5e14a7",
-                  "title": "New STRIDE threat",
+                  "title": "SQL INJECTION",
                   "status": "Open",
-                  "severity": "TBD",
+                  "severity": "High",
                   "type": "Tampering",
                   "description": "Provide a description for this threat",
                   "mitigation": "Provide remediation for this threat or a reason if status is N/A",
                   "modelType": "STRIDE",
-                  "new": true,
+                  "new": false,
                   "number": 1,
                   "score": ""
                 }
-              ]
+              ],
+              "threatFrequency": {
+                "tampering": 1,
+                "informationDisclosure": 0,
+                "denialOfService": 0
+              }
             },
             "labels": [
               "Data Flow"
@@ -1158,6 +1208,6 @@
     ],
     "diagramTop": 1,
     "reviewer": "",
-    "threatTop": 5
+    "threatTop": 9
   }
 }
